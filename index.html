@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>小金库</title>
+<style>
+:root {
+  --primary: #4A6CF7;
+  --primary-light: #eef1ff;
+  --primary-dark: #3a5bed;
+  --danger: #ff4d4f;
+  --danger-light: #fff2f0;
+  --warning: #faad14;
+  --warning-light: #fffbe6;
+  --success: #52c41a;
+  --success-light: #f6ffed;
+  --text-primary: #1a1a2e;
+  --text-secondary: #8c8c8c;
+  --text-tertiary: #bfbfbf;
+  --bg: #f0f2f5;
+  --card-bg: #ffffff;
+  --border: #f0f0f0;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.container { max-width: 720px; margin: 0 auto; padding: 0 16px 40px; }
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, var(--primary) 0%, #6a5ae0 100%);
+  color: white;
+  padding: 14px 16px 16px;
+  border-radius: 0 0 24px 24px;
+  margin-bottom: 12px;
+}
+.header-row { display: flex; align-items: center; justify-content: space-between; }
+.header-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.header-title svg { width: 28px; height: 28px; flex-shrink: 0; }
+.header-actions { display: flex; gap: 8px; }
+.icon-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.3); }
+.icon-btn svg { width: 18px; height: 18px; }
+.header-subtitle { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+}
+
+/* Today Section */
+.today-section { margin-bottom: 16px; }
+.section-title {
+  font-size: 16px; font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 12px;
+}
+.section-title svg { width: 18px; height: 18px; }
+.today-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.today-item.overdue { background: var(--danger-light); border-left: 3px solid var(--danger); }
+.today-item.soon { background: var(--warning-light); border-left: 3px solid var(--warning); }
+.today-item-info { flex: 1; min-width: 0; }
+.today-item-bank { font-weight: 600; font-size: 14px; }
+.today-item-amount { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.today-item-date { font-size: 12px; margin-top: 2px; }
+.today-item-date.overdue-text { color: var(--danger); font-weight: 600; }
+.today-item-date.soon-text { color: var(--warning); font-weight: 600; }
+.today-item-btn {
+  background: white;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 36px;
+  display: flex; align-items: center;
+  transition: all 0.2s;
+}
+.today-item-btn:hover { background: var(--primary); color: white; }
+.today-empty { text-align: center; color: var(--text-tertiary); padding: 20px 0; font-size: 14px; }
+
+/* Summary Cards */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.summary-card {
+  border-radius: var(--radius-sm);
+  padding: 18px 12px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.summary-card.amount-card {
+  background: linear-gradient(135deg, var(--primary) 0%, #6a5ae0 100%);
+  color: white;
+}
+.summary-card.interest-card {
+  background: linear-gradient(135deg, var(--success) 0%, #389e0d 100%);
+  color: white;
+}
+.summary-value { font-size: 26px; font-weight: 800; line-height: 1.2; }
+.summary-card.amount-card .summary-value { color: white; }
+.summary-card.interest-card .summary-value { color: white; }
+.summary-label { font-size: 13px; opacity: 0.9; margin-top: 6px; font-weight: 500; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.tab svg { width: 18px; height: 18px; }
+.tab.active { background: var(--primary); color: white; }
+
+/* Add Form */
+.add-form { display: none; }
+.add-form.show { display: block; }
+.form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 140px; margin-bottom: 12px; }
+.form-group.full { flex-basis: 100%; }
+.form-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; display: block; }
+.form-input, .form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: white;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--primary); }
+.form-input::placeholder { color: var(--text-tertiary); }
+
+/* Date Selects */
+.date-selects { display: flex; gap: 6px; }
+.date-sel { flex: 1; padding: 10px 8px; font-size: 16px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: inherit; color: var(--text-primary); background: white; outline: none; min-height: 44px; }
+.date-sel:focus { border-color: var(--primary); }
+.input-suffix { position: relative; }
+.input-suffix .suffix {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; color: var(--text-tertiary); pointer-events: none;
+}
+.term-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.term-chip {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: white;
+  transition: all 0.2s;
+  min-height: 32px;
+  display: flex; align-items: center;
+}
+.term-chip:hover, .term-chip.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.form-actions { display: flex; gap: 10px; margin-top: 4px; }
+.btn {
+  padding: 11px 20px;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  min-height: 44px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-primary { background: var(--primary); color: white; flex: 1; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: var(--bg); color: var(--text-secondary); }
+.btn-danger { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+.btn svg { width: 18px; height: 18px; }
+
+.btn-add {
+  width: 100%;
+  padding: 12px;
+  border: 1px dashed var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px;
+}
+.btn-add:hover { background: var(--primary); color: white; border-style: solid; }
+.btn-add svg { width: 20px; height: 20px; }
+
+/* Deposit List */
+.deposit-list { display: flex; flex-direction: column; gap: 10px; }
+.deposit-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  border-left: 3px solid var(--primary);
+  transition: opacity 0.2s;
+}
+.deposit-card.withdrawn { opacity: 0.5; border-left-color: var(--text-tertiary); }
+.deposit-card.overdue { border-left-color: var(--danger); }
+.deposit-card.soon { border-left-color: var(--warning); }
+.deposit-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.deposit-bank { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.deposit-bank svg { width: 18px; height: 18px; color: var(--primary); }
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.badge.active { background: var(--success-light); color: var(--success); }
+.badge.withdrawn { background: #f0f0f0; color: var(--text-secondary); }
+.badge.overdue { background: var(--danger-light); color: var(--danger); }
+.deposit-amount { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+.deposit-amount .currency { font-size: 14px; color: var(--text-secondary); font-weight: 400; }
+.deposit-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; margin-top: 8px; font-size: 13px; }
+.deposit-detail-item { display: flex; flex-direction: column; }
+.deposit-detail-label { color: var(--text-tertiary); font-size: 11px; }
+.deposit-detail-value { color: var(--text-primary); font-weight: 500; }
+.deposit-actions { display: flex; gap: 8px; margin-top: 12px; }
+.deposit-action-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  background: white;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  min-height: 36px;
+  display: flex; align-items: center; gap: 4px;
+}
+.deposit-action-btn svg { width: 14px; height: 14px; }
+.deposit-action-btn:hover { border-color: var(--primary); color: var(--primary); }
+.deposit-action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+.deposit-action-btn.success { border-color: var(--success); color: var(--success); }
+.deposit-action-btn.success:hover { background: var(--success); color: white; }
+.deposit-note { font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 6px 10px; background: var(--bg); border-radius: 6px; }
+
+/* Bank Group */
+.bank-group { margin-bottom: 14px; }
+.bank-group-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, var(--primary-light) 0%, rgba(106,90,224,0.06) 100%);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+.bank-group-header:active { background: var(--primary-light); opacity: 0.85; }
+.bank-group-left { display: flex; align-items: center; gap: 8px; }
+.bank-group-name { font-size: 16px; font-weight: 700; color: var(--primary); }
+.bank-group-name svg { width: 18px; height: 18px; color: var(--primary); }
+.bank-group-meta { display: flex; align-items: center; gap: 8px; }
+.bank-group-count {
+  background: linear-gradient(135deg, var(--primary) 0%, #6a5ae0 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 14px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 6px rgba(76, 65, 194, 0.25);
+  white-space: nowrap;
+}
+.bank-group-chevron { width: 18px; height: 18px; color: var(--text-tertiary); transition: transform 0.2s; }
+.bank-group.collapsed .bank-group-chevron { transform: rotate(-90deg); }
+.bank-group-items { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.bank-group.collapsed .bank-group-items { display: none; }
+.deposit-item {
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+  border-left: 3px solid var(--primary);
+  transition: opacity 0.2s;
+}
+.deposit-item.withdrawn { opacity: 0.5; border-left-color: var(--text-tertiary); }
+.deposit-item.overdue { border-left-color: var(--danger); }
+.deposit-item.soon { border-left-color: var(--warning); }
+.deposit-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.deposit-item-amount { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.deposit-item-amount .currency { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
+.deposit-item-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 12px; }
+.deposit-item-details .deposit-detail-label { color: var(--text-tertiary); font-size: 11px; }
+.deposit-item-details .deposit-detail-value { color: var(--text-primary); font-weight: 500; }
+
+/* Calendar */
+.calendar-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.calendar-nav {
+  display: flex; align-items: center; gap: 12px;
+}
+.calendar-nav-btn {
+  width: 36px; height: 36px;
+  border: none;
+  background: var(--card-bg);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+}
+.calendar-nav-btn:hover { background: var(--primary-light); }
+.calendar-nav-btn svg { width: 18px; height: 18px; color: var(--text-primary); }
+.calendar-title { font-size: 17px; font-weight: 700; min-width: 120px; text-align: center; }
+.calendar-month-summary {
+  display: flex; gap: 12px; margin-bottom: 12px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.calendar-month-summary span { font-weight: 600; color: var(--primary); }
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  box-shadow: var(--shadow);
+}
+.calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 6px 0;
+  font-weight: 600;
+}
+.calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+  min-height: 44px;
+}
+.calendar-cell:hover { background: var(--bg); }
+.calendar-cell.other-month { opacity: 0.3; }
+.calendar-cell .day-num { font-size: 15px; font-weight: 500; }
+.calendar-cell.today { background: var(--primary-light); }
+.calendar-cell.today .day-num { color: var(--primary); font-weight: 700; }
+.calendar-cell.has-deposit .day-num { font-weight: 700; }
+.calendar-cell.has-deposit::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+.calendar-cell.selected { background: var(--primary); }
+.calendar-cell.selected .day-num { color: white; }
+.calendar-cell.selected.has-deposit::after { background: white; }
+.calendar-cell.selected:hover { background: var(--primary-dark); }
+
+.calendar-detail { margin-top: 16px; }
+.calendar-detail-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--text-secondary); }
+.calendar-detail-empty { text-align: center; color: var(--text-tertiary); padding: 16px 0; font-size: 14px; }
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.view-toggle-btn {
+  padding: 5px 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: white;
+  transition: all 0.2s;
+  min-height: 36px;
+  font-family: inherit;
+}
+.view-toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Year View */
+.calendar-grid.year-mode { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.year-cell {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  min-height: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.year-cell:hover { border-color: var(--primary); }
+.year-cell.has-deposit { border-color: var(--primary); background: var(--primary-light); }
+.year-cell.current-month { box-shadow: inset 0 0 0 2px var(--primary); }
+.year-cell .month-name { font-size: 15px; font-weight: 700; }
+.year-cell .month-info { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; }
+.year-cell.has-deposit .month-info { color: var(--primary); }
+
+/* Data Management */
+.data-mgmt { margin-top: 24px; padding: 16px; }
+.data-mgmt-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; }
+.data-mgmt-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.data-mgmt-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  background: white;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 4px;
+  min-height: 40px;
+}
+.data-mgmt-btn:hover { border-color: var(--primary); color: var(--primary); }
+.data-mgmt-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+.data-mgmt-btn svg { width: 16px; height: 16px; }
+
+.backup-hint {
+  font-size: 12px; color: var(--warning);
+  background: var(--warning-light);
+  padding: 8px 12px; border-radius: 8px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.backup-hint svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+}
+.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.modal-text { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 10px; }
+.modal-actions .btn { flex: 1; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 2000;
+  transition: transform 0.3s;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.empty-list { text-align: center; padding: 40px 20px; color: var(--text-tertiary); }
+.empty-list svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
+
+.hidden { display: none !important; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-row { flex-direction: column; }
+  .form-group { min-width: 100%; }
+  .deposit-details { grid-template-columns: 1fr 1fr; }
+  .calendar-cell { min-height: 40px; }
+  .calendar-cell .day-num { font-size: 14px; }
+}
+
+@media (max-width: 380px) {
+  .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .summary-value { font-size: 16px; }
+  .calendar-cell .day-num { font-size: 13px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="container" style="padding: 0;">
+    <div class="header-row">
+      <div>
+        <div class="header-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l2-4h14l2 4"/><path d="M8 11h8"/></svg>
+          小金库
+        </div>
+        <div class="header-subtitle" id="headerSubtitle">我的存款，到期一目了然</div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="exportData()" title="导出备份">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <button class="icon-btn" onclick="document.getElementById('importFile').click()" title="导入恢复">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Backup Hint -->
+  <div class="backup-hint hidden" id="backupHint">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span id="backupHintText"></span>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card amount-card">
+      <div class="summary-value" id="totalAmount">0</div>
+      <div class="summary-label">存款总额</div>
+    </div>
+    <div class="summary-card interest-card">
+      <div class="summary-value" id="totalInterest">0</div>
+      <div class="summary-label">预估利息</div>
+    </div>
+  </div>
+
+  <!-- Today Section -->
+  <div class="today-section card" id="todayCard">
+    <div class="section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      今天要处理
+    </div>
+    <div id="todayList"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" id="tabList" onclick="switchTab('list')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      存款列表
+    </div>
+    <div class="tab" id="tabCalendar" onclick="switchTab('calendar')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      到期日历
+    </div>
+  </div>
+
+  <!-- List Tab -->
+  <div id="listTab">
+    <button class="btn-add" id="addBtn" onclick="toggleAddForm()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      添加存款
+    </button>
+
+    <div class="card add-form" id="addForm">
+      <div class="section-title" style="margin-bottom: 16px;" id="formTitle">新增存款记录</div>
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">银行名称</label>
+          <input type="text" class="form-input" id="inputBank" placeholder="如：工商银行">
+        </div>
+        <div class="form-group">
+          <label class="form-label">存入日期</label>
+          <div class="date-selects">
+            <select class="form-select date-sel" id="selYear"></select>
+            <select class="form-select date-sel" id="selMonth"></select>
+            <select class="form-select date-sel" id="selDay"></select>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">存款金额</label>
+          <div class="input-suffix">
+            <input type="number" class="form-input" id="inputAmount" placeholder="10000" step="0.01">
+            <span class="suffix">元</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">年利率</label>
+          <div class="input-suffix">
+            <input type="number" class="form-input" id="inputRate" placeholder="3.0" step="0.01">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">存款期限</label>
+        <div class="input-suffix">
+          <input type="number" class="form-input" id="inputTerm" placeholder="12" min="1" step="1">
+          <span class="suffix">个月</span>
+        </div>
+        <div class="term-chips">
+          <div class="term-chip" onclick="setTerm(3)">3个月</div>
+          <div class="term-chip" onclick="setTerm(6)">6个月</div>
+          <div class="term-chip" onclick="setTerm(12)">1年</div>
+          <div class="term-chip" onclick="setTerm(24)">2年</div>
+          <div class="term-chip" onclick="setTerm(36)">3年</div>
+          <div class="term-chip" onclick="setTerm(60)">5年</div>
+        </div>
+      </div>
+      <div class="form-group full hidden" id="editStatusGroup">
+        <label class="form-label">状态</label>
+        <select class="form-select" id="editStatus">
+          <option value="active">存入中</option>
+          <option value="withdrawn">已提取</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">备注（可选）</label>
+        <input type="text" class="form-input" id="inputNote" placeholder="如：大额存单">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="formSubmitBtn" onclick="submitDeposit()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="formSubmitText">确认添加</span>
+        </button>
+        <button class="btn btn-secondary" onclick="toggleAddForm()">取消</button>
+      </div>
+    </div>
+
+    <div class="deposit-list" id="depositList"></div>
+  </div>
+
+  <!-- Calendar Tab -->
+  <div id="calendarTab" class="hidden">
+    <div class="card">
+      <div class="calendar-header">
+        <button class="calendar-nav-btn" onclick="calPrev()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="calendar-title" id="calendarTitle"></div>
+        <button class="calendar-nav-btn" onclick="calNext()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="view-toggle">
+        <button class="view-toggle-btn active" id="btnMonthView" onclick="setCalView('month')">按月</button>
+        <button class="view-toggle-btn" id="btnYearView" onclick="setCalView('year')">按年</button>
+      </div>
+      <div class="calendar-month-summary" id="calendarMonthSummary"></div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+    <div class="calendar-detail card" id="calendarDetail">
+      <div class="calendar-detail-title" id="calendarDetailTitle">本月到期存款</div>
+      <div id="calendarDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- Data Management -->
+  <div class="card data-mgmt">
+    <div class="data-mgmt-title">数据管理</div>
+    <div class="data-mgmt-actions">
+      <button class="data-mgmt-btn" onclick="exportData()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        导出JSON
+      </button>
+      <button class="data-mgmt-btn" onclick="exportCSV()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        导出CSV
+      </button>
+      <button class="data-mgmt-btn" onclick="document.getElementById('importFile').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        导入恢复
+      </button>
+      <button class="data-mgmt-btn danger" onclick="confirmClearAll()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        清空数据
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <div class="modal-title" id="confirmTitle">确认操作</div>
+    <div class="modal-text" id="confirmText">确定要执行此操作吗？</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" id="confirmOkBtn">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== Data Layer ==========
+const STORAGE_KEY = 'wb_deposit_records';
+const SAMPLE_KEY = 'wb_deposit_sample_loaded';
+const EXPORT_KEY = 'wb_deposit_last_export';
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ========== Utilities ==========
+function parseDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + d;
+}
+
+function todayStr() {
+  return formatDate(new Date());
+}
+
+function addMonths(dateStr, months) {
+  const date = parseDate(dateStr);
+  date.setMonth(date.getMonth() + months);
+  return formatDate(date);
+}
+
+function calcInterest(amount, rate, termMonths) {
+  return amount * (rate / 100) * (termMonths / 12);
+}
+
+function calcMaturityDate(startDate, termMonths) {
+  return addMonths(startDate, termMonths);
+}
+
+function formatMoney(num) {
+  if (num >= 10000) {
+    return (num / 10000).toFixed(2) + ' 万';
+  }
+  return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatMoneyFull(num) {
+  return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function daysBetween(dateStr1, dateStr2) {
+  const d1 = parseDate(dateStr1);
+  const d2 = parseDate(dateStr2);
+  return Math.round((d2 - d1) / 86400000);
+}
+
+// ========== Date Select Picker ==========
+function initDateSelects() {
+  var selY = document.getElementById('selYear');
+  var selM = document.getElementById('selMonth');
+  var selD = document.getElementById('selDay');
+  var now = new Date();
+
+  // Years: 2018 ~ current+1
+  for (var y = 2018; y <= now.getFullYear() + 1; y++) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + '年';
+    selY.appendChild(opt);
+  }
+  // Months
+  for (var m = 1; m <= 12; m++) {
+    var optM = document.createElement('option');
+    optM.value = m; optM.textContent = m + '月';
+    selM.appendChild(optM);
+  }
+
+  selY.addEventListener('change', updateDayOptions);
+  selM.addEventListener('change', updateDayOptions);
+
+  setStartDateStr(todayStr());
+}
+
+function updateDayOptions() {
+  var selY = document.getElementById('selYear');
+  var selM = document.getElementById('selMonth');
+  var selD = document.getElementById('selDay');
+  var y = parseInt(selY.value);
+  var m = parseInt(selM.value);
+  var daysInMonth = new Date(y, m, 0).getDate();
+  var prevDay = parseInt(selD.value) || 1;
+
+  selD.innerHTML = '';
+  for (var d = 1; d <= daysInMonth; d++) {
+    var opt = document.createElement('option');
+    opt.value = d; opt.textContent = d + '日';
+    selD.appendChild(opt);
+  }
+  if (prevDay > daysInMonth) prevDay = daysInMonth;
+  selD.value = prevDay;
+}
+
+function getStartDateStr() {
+  var y = document.getElementById('selYear').value;
+  var m = String(document.getElementById('selMonth').value).padStart(2, '0');
+  var d = String(document.getElementById('selDay').value).padStart(2, '0');
+  return y + '-' + m + '-' + d;
+}
+
+function setStartDateStr(dateStr) {
+  if (!dateStr) { dateStr = todayStr(); }
+  var parts = dateStr.split('-');
+  var y = parseInt(parts[0]);
+  var m = parseInt(parts[1]);
+  var d = parseInt(parts[2]);
+
+  var selY = document.getElementById('selYear');
+  var selM = document.getElementById('selMonth');
+  var selD = document.getElementById('selDay');
+
+  // If year not in range, add it
+  var yearExists = false;
+  for (var i = 0; i < selY.options.length; i++) {
+    if (parseInt(selY.options[i].value) === y) { yearExists = true; break; }
+  }
+  if (!yearExists) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + '年';
+    selY.appendChild(opt);
+  }
+
+  selY.value = y;
+  selM.value = m;
+  updateDayOptions();
+  selD.value = d;
+}
+
+function generateId() {
+  return Date.now() + Math.floor(Math.random() * 1000);
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(function() { toast.classList.remove('show'); }, 2000);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ========== Sample Data ==========
+function loadSampleData() {
+  if (localStorage.getItem(SAMPLE_KEY)) return;
+  const today = new Date();
+  const samples = [
+    {
+      id: generateId(),
+      bank: '工商银行',
+      amount: 50000,
+      rate: 2.5,
+      term: 12,
+      startDate: '2025-08-01',
+      maturityDate: '2026-08-01',
+      note: '定期存款',
+      status: 'active',
+      createdAt: Date.now() - 5000000
+    },
+    {
+      id: generateId(),
+      bank: '建设银行',
+      amount: 30000,
+      rate: 2.0,
+      term: 6,
+      startDate: '2026-02-20',
+      maturityDate: '2026-08-20',
+      note: '',
+      status: 'active',
+      createdAt: Date.now() - 4000000
+    },
+    {
+      id: generateId(),
+      bank: '招商银行',
+      amount: 100000,
+      rate: 3.0,
+      term: 12,
+      startDate: '2026-06-15',
+      maturityDate: '2027-06-15',
+      note: '大额存单',
+      status: 'active',
+      createdAt: Date.now() - 3000000
+    },
+    {
+      id: generateId(),
+      bank: '农业银行',
+      amount: 20000,
+      rate: 1.8,
+      term: 3,
+      startDate: '2026-07-01',
+      maturityDate: '2026-10-01',
+      note: '',
+      status: 'active',
+      createdAt: Date.now() - 2000000
+    },
+    {
+      id: generateId(),
+      bank: '中国银行',
+      amount: 80000,
+      rate: 3.5,
+      term: 24,
+      startDate: '2026-08-10',
+      maturityDate: '2028-08-10',
+      note: '三年期大额存单',
+      status: 'active',
+      createdAt: Date.now() - 1000000
+    }
+  ];
+  samples.forEach(function(s) { s.sample = true; });
+  saveData(samples);
+  localStorage.setItem(SAMPLE_KEY, '1');
+}
+
+// ========== Today Section ==========
+function getOverdueDeposits() {
+  const data = loadData();
+  const today = todayStr();
+  return data.filter(function(d) {
+    return d.status === 'active' && d.maturityDate < today;
+  }).sort(function(a, b) { return a.maturityDate < b.maturityDate ? -1 : 1; });
+}
+
+function getSoonDeposits() {
+  const data = loadData();
+  const today = todayStr();
+  const soon = formatDate(new Date(Date.now() + 7 * 86400000));
+  return data.filter(function(d) {
+    return d.status === 'active' && d.maturityDate >= today && d.maturityDate <= soon;
+  }).sort(function(a, b) { return a.maturityDate < b.maturityDate ? -1 : 1; });
+}
+
+function renderTodaySection() {
+  const container = document.getElementById('todayList');
+  const overdue = getOverdueDeposits();
+  const soon = getSoonDeposits();
+
+  if (overdue.length === 0 && soon.length === 0) {
+    container.innerHTML = '<div class="today-empty">近期没有需要处理的存款</div>';
+    return;
+  }
+
+  var html = '';
+  overdue.forEach(function(d) {
+    var days = daysBetween(d.maturityDate, todayStr());
+    var interest = calcInterest(d.amount, d.rate, d.term);
+    html += '<div class="today-item overdue">' +
+      '<div class="today-item-info">' +
+        '<div class="today-item-bank">' + escapeHtml(d.bank || '未填写银行') + '</div>' +
+        '<div class="today-item-amount">' + formatMoneyFull(d.amount) + ' 元 / 利息 ' + formatMoneyFull(interest) + ' 元</div>' +
+        '<div class="today-item-date overdue-text">已逾期 ' + days + ' 天（' + d.maturityDate + ' 到期）</div>' +
+      '</div>' +
+      '<button class="today-item-btn" onclick="openEditForm(' + d.id + ')">去处理</button>' +
+    '</div>';
+  });
+
+  soon.forEach(function(d) {
+    var days = daysBetween(todayStr(), d.maturityDate);
+    var interest = calcInterest(d.amount, d.rate, d.term);
+    var dayText = days === 0 ? '今天到期' : days + ' 天后到期';
+    html += '<div class="today-item soon">' +
+      '<div class="today-item-info">' +
+        '<div class="today-item-bank">' + escapeHtml(d.bank || '未填写银行') + '</div>' +
+        '<div class="today-item-amount">' + formatMoneyFull(d.amount) + ' 元 / 利息 ' + formatMoneyFull(interest) + ' 元</div>' +
+        '<div class="today-item-date soon-text">' + dayText + '（' + d.maturityDate + '）</div>' +
+      '</div>' +
+      '<button class="today-item-btn" onclick="openEditForm(' + d.id + ')">去处理</button>' +
+    '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+// ========== Summary ==========
+function renderSummary() {
+  var data = loadData();
+  var active = data.filter(function(d) { return d.status === 'active'; });
+  var totalAmount = active.reduce(function(s, d) { return s + d.amount; }, 0);
+  var totalInterest = active.reduce(function(s, d) { return s + calcInterest(d.amount, d.rate, d.term); }, 0);
+
+  document.getElementById('totalAmount').textContent = formatMoney(totalAmount);
+  document.getElementById('totalInterest').textContent = formatMoney(totalInterest);
+
+  // Backup hint: remind when no export for 7+ days, or 30+ records, or never exported
+  var hint = document.getElementById('backupHint');
+  var hintText = document.getElementById('backupHintText');
+  var realData = data.filter(function(d) { return !d.sample; });
+  var shouldRemind = false;
+  var msg = '';
+  if (realData.length > 0) {
+    var lastExport = parseInt(localStorage.getItem(EXPORT_KEY) || '0');
+    var daysSinceExport = lastExport ? Math.floor((Date.now() - lastExport) / 86400000) : -1;
+    if (daysSinceExport < 0) {
+      shouldRemind = true;
+      msg = '还没有备份过，建议点右上角「导出备份」存一份';
+    } else if (daysSinceExport >= 7) {
+      shouldRemind = true;
+      msg = '距上次备份已 ' + daysSinceExport + ' 天，建议导出最新备份';
+    } else if (realData.length >= 30) {
+      shouldRemind = true;
+      msg = '数据已积累 ' + realData.length + ' 条，建议导出备份';
+    }
+  }
+  if (shouldRemind) {
+    hint.classList.remove('hidden');
+    hintText.textContent = msg;
+  } else {
+    hint.classList.add('hidden');
+  }
+}
+
+// ========== Deposit List ==========
+function renderList() {
+  var data = loadData();
+  var container = document.getElementById('depositList');
+  var today = todayStr();
+
+  if (data.length === 0) {
+    container.innerHTML = '<div class="empty-list">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l2-4h14l2 4"/></svg>' +
+      '<div>还没有存款记录，点击上方添加</div></div>';
+    return;
+  }
+
+  data.sort(function(a, b) {
+    return a.maturityDate < b.maturityDate ? -1 : 1;
+  });
+
+  // Group by bank
+  var groups = {};
+  var bankOrder = [];
+  data.forEach(function(d) {
+    var bankKey = d.bank || '未填写银行';
+    if (!groups[bankKey]) { groups[bankKey] = []; bankOrder.push(bankKey); }
+    groups[bankKey].push(d);
+  });
+
+  var bankIconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/></svg>';
+  var chevronSvg = '<svg class="bank-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>';
+
+  var html = '';
+  bankOrder.forEach(function(bankKey) {
+    var deposits = groups[bankKey];
+    var bankTotal = deposits.reduce(function(s, d) { return s + d.amount; }, 0);
+    var hasOverdue = deposits.some(function(d) { return d.status === 'active' && d.maturityDate < today; });
+
+    html += '<div class="bank-group' + (hasOverdue ? '' : ' collapsed') + '">';
+    html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
+    html += '<div class="bank-group-left">';
+    html += '<span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span>';
+    html += '</div>';
+    html += '<div class="bank-group-meta">';
+    html += '<span class="bank-group-count">' + deposits.length + '笔 · ¥' + formatMoney(bankTotal) + '</span>';
+    html += chevronSvg;
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="bank-group-items">';
+
+    deposits.forEach(function(d) {
+      var interest = calcInterest(d.amount, d.rate, d.term);
+      var maturityAmount = d.amount + interest;
+      var isOverdue = d.status === 'active' && d.maturityDate < today;
+      var isSoon = d.status === 'active' && d.maturityDate >= today && d.maturityDate <= formatDate(new Date(Date.now() + 7 * 86400000));
+      var itemClass = 'deposit-item';
+      if (d.status === 'withdrawn') itemClass += ' withdrawn';
+      else if (isOverdue) itemClass += ' overdue';
+      else if (isSoon) itemClass += ' soon';
+
+      // 右上角显示剩余期限（替代状态）
+      var remainClass = 'badge active';
+      var remainText = '';
+      if (d.status === 'withdrawn') {
+        remainText = '已提取';
+        remainClass = 'badge withdrawn';
+      } else {
+        var remDays = daysBetween(today, d.maturityDate);
+        if (remDays < 0) {
+          remainText = '已逾期' + Math.abs(remDays) + '天';
+          remainClass = 'badge overdue';
+        } else if (remDays === 0) {
+          remainText = '今天到期';
+        } else if (remDays >= 30) {
+          remainText = '剩' + Math.floor(remDays / 30) + '个月';
+        } else {
+          remainText = '剩' + remDays + '天';
+        }
+      }
+
+      html += '<div class="' + itemClass + '">';
+      html += '<div class="deposit-item-top">';
+      html += '<div class="deposit-item-amount"><span class="currency">¥</span>' + formatMoneyFull(d.amount) + '</div>';
+      html += '<span class="' + remainClass + '">' + remainText + '</span>';
+      html += '</div>';
+      html += '<div class="deposit-item-details">';
+      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + d.rate.toFixed(2) + '% / ' + d.term + '月</span></div>';
+      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日</span><span class="deposit-detail-value">' + d.maturityDate + '</span></div>';
+      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value" style="color:var(--success)">¥' + formatMoneyFull(interest) + '</span></div>';
+      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">到期总额</span><span class="deposit-detail-value" style="font-weight:700">¥' + formatMoneyFull(maturityAmount) + '</span></div>';
+      html += '</div>';
+
+      if (d.note) {
+        html += '<div class="deposit-note">' + escapeHtml(d.note) + '</div>';
+      }
+
+      html += '<div class="deposit-actions">';
+      html += '<button class="deposit-action-btn" onclick="openEditForm(' + d.id + ')">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+        '去处理</button>';
+      html += '<button class="deposit-action-btn danger" onclick="confirmDelete(' + d.id + ')">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+        '删除</button>';
+      html += '</div>';
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+// ========== Add Form ==========
+function resetAddForm() {
+  document.getElementById('editId').value = '';
+  document.getElementById('inputBank').value = '';
+  document.getElementById('inputAmount').value = '';
+  document.getElementById('inputRate').value = '';
+  document.getElementById('inputTerm').value = '';
+  document.getElementById('inputNote').value = '';
+  setStartDateStr(todayStr());
+  document.getElementById('editStatus').value = 'active';
+  document.querySelectorAll('.term-chip').forEach(function(c) { c.classList.remove('active'); });
+  document.getElementById('formTitle').textContent = '新增存款记录';
+  document.getElementById('formSubmitText').textContent = '确认添加';
+  document.getElementById('editStatusGroup').classList.add('hidden');
+}
+
+function toggleAddForm() {
+  var form = document.getElementById('addForm');
+  var btn = document.getElementById('addBtn');
+  if (form.classList.contains('show')) {
+    form.classList.remove('show');
+    btn.style.display = 'flex';
+    resetAddForm();
+  } else {
+    resetAddForm();
+    form.classList.add('show');
+    btn.style.display = 'none';
+    document.getElementById('inputBank').focus();
+  }
+}
+
+function openEditForm(id) {
+  var data = loadData();
+  var d = data.find(function(item) { return item.id === id; });
+  if (!d) return;
+
+  document.getElementById('editId').value = d.id;
+  document.getElementById('inputBank').value = d.bank || '';
+  document.getElementById('inputAmount').value = d.amount;
+  document.getElementById('inputRate').value = d.rate;
+  document.getElementById('inputTerm').value = d.term;
+  setStartDateStr(d.startDate);
+  document.getElementById('inputNote').value = d.note || '';
+  document.getElementById('editStatus').value = d.status || 'active';
+
+  document.getElementById('formTitle').textContent = '编辑存款记录';
+  document.getElementById('formSubmitText').textContent = '保存修改';
+  document.getElementById('editStatusGroup').classList.remove('hidden');
+
+  // Sync term chip active state
+  document.querySelectorAll('.term-chip').forEach(function(c) {
+    c.classList.remove('active');
+    var termText = c.textContent.replace(/[^\d]/g, '');
+    if (parseInt(termText) === d.term) c.classList.add('active');
+  });
+
+  var form = document.getElementById('addForm');
+  var btn = document.getElementById('addBtn');
+  form.classList.add('show');
+  btn.style.display = 'none';
+
+  // Scroll to form
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('inputBank').focus();
+}
+
+function setTerm(months) {
+  document.getElementById('inputTerm').value = months;
+  document.querySelectorAll('.term-chip').forEach(function(c) { c.classList.remove('active'); });
+  event.target.classList.add('active');
+}
+
+function submitDeposit() {
+  var editId = document.getElementById('editId').value;
+  var bank = document.getElementById('inputBank').value.trim();
+  var amount = parseFloat(document.getElementById('inputAmount').value);
+  var rate = parseFloat(document.getElementById('inputRate').value);
+  var term = parseInt(document.getElementById('inputTerm').value);
+  var startDate = getStartDateStr();
+  var note = document.getElementById('inputNote').value.trim();
+
+  if (!amount || amount <= 0) { showToast('请输入有效的存款金额'); return; }
+  if (!rate || rate <= 0) { showToast('请输入有效的年利率'); return; }
+  if (!term || term <= 0) { showToast('请输入有效的存款期限'); return; }
+  if (!startDate) { showToast('请选择存入日期'); return; }
+
+  var maturityDate = calcMaturityDate(startDate, term);
+  var data = loadData();
+
+  if (editId) {
+    // Edit existing
+    var item = data.find(function(d) { return d.id == editId; });
+    if (!item) { showToast('记录不存在'); return; }
+    item.bank = bank || '未填写银行';
+    item.amount = amount;
+    item.rate = rate;
+    item.term = term;
+    item.startDate = startDate;
+    item.maturityDate = maturityDate;
+    item.note = note;
+    var newStatus = document.getElementById('editStatus').value;
+    if (newStatus === 'withdrawn' && item.status !== 'withdrawn') {
+      item.withdrawnAt = Date.now();
+    } else if (newStatus === 'active' && item.status === 'withdrawn') {
+      item.withdrawnAt = null;
+    }
+    item.status = newStatus;
+    item.updatedAt = Date.now();
+    saveData(data);
+    toggleAddForm();
+    renderAll();
+    showToast('存款记录已保存');
+  } else {
+    // Add new
+    var deposit = {
+      id: generateId(),
+      bank: bank || '未填写银行',
+      amount: amount,
+      rate: rate,
+      term: term,
+      startDate: startDate,
+      maturityDate: maturityDate,
+      note: note,
+      status: 'active',
+      createdAt: Date.now()
+    };
+    data.push(deposit);
+    saveData(data);
+    toggleAddForm();
+    renderAll();
+    showToast('存款记录已添加');
+  }
+}
+
+// ========== Actions ==========
+function confirmDelete(id) {
+  showConfirm('删除记录', '确定要删除这笔存款记录吗？此操作不可撤销。', function() {
+    var data = loadData();
+    data = data.filter(function(d) { return d.id !== id; });
+    saveData(data);
+    renderAll();
+    showToast('记录已删除');
+  });
+}
+
+function confirmClearAll() {
+  showConfirm('清空所有数据', '确定要清空所有存款记录吗？此操作不可撤销，建议先导出备份！', function() {
+    saveData([]);
+    renderAll();
+    showToast('所有数据已清空');
+  });
+}
+
+function showConfirm(title, text, callback) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').textContent = text;
+  document.getElementById('confirmModal').classList.add('show');
+  var btn = document.getElementById('confirmOkBtn');
+  btn.onclick = function() {
+    closeConfirm();
+    callback();
+  };
+}
+
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('show');
+}
+
+// ========== Tab Switch ==========
+function switchTab(tab) {
+  if (tab === 'list') {
+    document.getElementById('listTab').classList.remove('hidden');
+    document.getElementById('calendarTab').classList.add('hidden');
+    document.getElementById('tabList').classList.add('active');
+    document.getElementById('tabCalendar').classList.remove('active');
+  } else {
+    document.getElementById('listTab').classList.add('hidden');
+    document.getElementById('calendarTab').classList.remove('hidden');
+    document.getElementById('tabList').classList.remove('active');
+    document.getElementById('tabCalendar').classList.add('active');
+    renderCalendar();
+  }
+}
+
+// ========== Calendar ==========
+var calYear, calMonth, selectedDay = null, calendarView = 'month';
+
+function initCalendar() {
+  var now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+}
+
+function setCalView(view) {
+  calendarView = view;
+  selectedDay = null;
+  document.getElementById('btnMonthView').classList.toggle('active', view === 'month');
+  document.getElementById('btnYearView').classList.toggle('active', view === 'year');
+  renderCalendar();
+}
+
+function calPrev() {
+  if (calendarView === 'year') { calYear--; }
+  else {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+  }
+  selectedDay = null;
+  renderCalendar();
+}
+
+function calNext() {
+  if (calendarView === 'year') { calYear++; }
+  else {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+  }
+  selectedDay = null;
+  renderCalendar();
+}
+
+function openMonth(m) {
+  calMonth = m;
+  selectedDay = null;
+  setCalView('month');
+}
+
+function getDepositsInPeriod(startStr, endStr) {
+  var data = loadData();
+  return data.filter(function(d) {
+    return d.status === 'active' && d.maturityDate >= startStr && d.maturityDate <= endStr;
+  }).sort(function(a, b) { return a.maturityDate < b.maturityDate ? -1 : 1; });
+}
+
+function renderCalendar() {
+  var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var titleEl = document.getElementById('calendarTitle');
+  var gridEl = document.getElementById('calendarGrid');
+  var today = new Date();
+  var todayDateStr = formatDate(today);
+
+  if (calendarView === 'year') {
+    titleEl.textContent = calYear + '年';
+    gridEl.classList.add('year-mode');
+
+    var yearStart = calYear + '-01-01';
+    var yearEnd = calYear + '-12-31';
+    var yearDeposits = getDepositsInPeriod(yearStart, yearEnd);
+
+    var html = '';
+    for (var m = 0; m < 12; m++) {
+      var mStart = calYear + '-' + String(m + 1).padStart(2, '0') + '-01';
+      var mEnd = calYear + '-' + String(m + 1).padStart(2, '0') + '-' + String(new Date(calYear, m + 1, 0).getDate());
+      var mList = yearDeposits.filter(function(d) { return d.maturityDate >= mStart && d.maturityDate <= mEnd; });
+      var cls = 'year-cell';
+      if (mList.length > 0) cls += ' has-deposit';
+      if (today.getFullYear() === calYear && today.getMonth() === m) cls += ' current-month';
+      var mAmount = mList.reduce(function(s, d) { return s + d.amount; }, 0);
+      var info = mList.length > 0
+        ? mList.length + ' 笔 ¥' + formatMoney(mAmount)
+        : '无到期';
+      html += '<div class="' + cls + '" onclick="openMonth(' + m + ')">' +
+        '<div class="month-name">' + monthNames[m] + '</div>' +
+        '<div class="month-info">' + info + '</div>' +
+      '</div>';
+    }
+    gridEl.innerHTML = html;
+
+    var yearAmount = yearDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
+    var yearInterest = yearDeposits.reduce(function(s, d) { return s + calcInterest(d.amount, d.rate, d.term); }, 0);
+    var summaryHtml = yearDeposits.length > 0
+      ? '本年到期 <span>' + yearDeposits.length + '</span> 笔，本金 <span>¥' + formatMoney(yearAmount) + '</span>，利息 <span>¥' + formatMoney(yearInterest) + '</span>'
+      : '本年无到期存款';
+    document.getElementById('calendarMonthSummary').innerHTML = summaryHtml;
+
+    renderCalendarDetail(yearDeposits, true);
+    return;
+  }
+
+  // ---- Month View ----
+  gridEl.classList.remove('year-mode');
+  titleEl.textContent = calYear + '年 ' + monthNames[calMonth];
+
+  var monthStart = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-01';
+  var monthEnd = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(new Date(calYear, calMonth + 1, 0).getDate());
+  var monthDeposits = getDepositsInPeriod(monthStart, monthEnd);
+
+  // Build deposit date map
+  var depositMap = {};
+  monthDeposits.forEach(function(d) {
+    var day = parseDate(d.maturityDate).getDate();
+    if (!depositMap[day]) depositMap[day] = [];
+    depositMap[day].push(d);
+  });
+
+  // Weekday headers
+  var weekdays = ['日','一','二','三','四','五','六'];
+  var html = '';
+  weekdays.forEach(function(w) {
+    html += '<div class="calendar-weekday">' + w + '</div>';
+  });
+
+  // Calendar days
+  var firstDay = new Date(calYear, calMonth, 1);
+  var startWeekday = firstDay.getDay();
+  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  var prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+
+  // Previous month trailing days
+  for (var i = startWeekday - 1; i >= 0; i--) {
+    html += '<div class="calendar-cell other-month"><span class="day-num">' + (prevMonthDays - i) + '</span></div>';
+  }
+
+  // Current month days
+  for (var day = 1; day <= daysInMonth; day++) {
+    var classes = 'calendar-cell';
+    var dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    if (dateStr === todayDateStr) classes += ' today';
+    if (depositMap[day]) classes += ' has-deposit';
+    if (selectedDay === day) classes += ' selected';
+
+    html += '<div class="' + classes + '" onclick="selectDay(' + day + ')"><span class="day-num">' + day + '</span></div>';
+  }
+
+  // Next month leading days
+  var totalCells = startWeekday + daysInMonth;
+  var trailing = (7 - (totalCells % 7)) % 7;
+  for (var j = 1; j <= trailing; j++) {
+    html += '<div class="calendar-cell other-month"><span class="day-num">' + j + '</span></div>';
+  }
+
+  gridEl.innerHTML = html;
+
+  // Month summary
+  var monthAmount = monthDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
+  var monthInterest = monthDeposits.reduce(function(s, d) { return s + calcInterest(d.amount, d.rate, d.term); }, 0);
+
+  var summaryHtml = '';
+  if (monthDeposits.length > 0) {
+    summaryHtml = '本月到期 <span>' + monthDeposits.length + '</span> 笔，本金 <span>¥' + formatMoney(monthAmount) + '</span>，利息 <span>¥' + formatMoney(monthInterest) + '</span>';
+  } else {
+    summaryHtml = '本月无到期存款';
+  }
+  document.getElementById('calendarMonthSummary').innerHTML = summaryHtml;
+
+  // Detail panel
+  renderCalendarDetail(monthDeposits, false);
+}
+
+function renderCalendarDetail(monthDeposits, isYear) {
+  var title = document.getElementById('calendarDetailTitle');
+  var content = document.getElementById('calendarDetailContent');
+
+  if (selectedDay && !isYear) {
+    var dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(selectedDay).padStart(2, '0');
+    title.textContent = selectedDay + '日到期存款（' + dateStr + '）';
+    var dayDeposits = monthDeposits.filter(function(d) {
+      return d.maturityDate === dateStr;
+    });
+    if (dayDeposits.length === 0) {
+      content.innerHTML = '<div class="calendar-detail-empty">这一天没有存款到期</div>';
+    } else {
+      content.innerHTML = renderDepositCards(dayDeposits);
+    }
+  } else {
+    title.textContent = isYear ? (calYear + '年到期存款') : '本月到期存款';
+    if (monthDeposits.length === 0) {
+      content.innerHTML = '<div class="calendar-detail-empty">' + (isYear ? '今年没有存款到期' : '本月没有存款到期') + '</div>';
+    } else {
+      content.innerHTML = renderDepositCards(monthDeposits);
+    }
+  }
+}
+
+function renderDepositCards(deposits) {
+  var today = todayStr();
+
+  // Group by bank
+  var groups = {};
+  var bankOrder = [];
+  deposits.forEach(function(d) {
+    var bankKey = d.bank || '未填写银行';
+    if (!groups[bankKey]) { groups[bankKey] = []; bankOrder.push(bankKey); }
+    groups[bankKey].push(d);
+  });
+
+  var bankIconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/></svg>';
+
+  var html = '';
+  bankOrder.forEach(function(bankKey) {
+    var items = groups[bankKey];
+    var bankTotal = items.reduce(function(s, d) { return s + d.amount; }, 0);
+
+    html += '<div class="bank-group">';
+    html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
+    html += '<div class="bank-group-left"><span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span></div>';
+    html += '<div class="bank-group-meta"><span>' + items.length + '笔 · ¥' + formatMoney(bankTotal) + '</span>';
+    html += '<svg class="bank-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>';
+    html += '</div>';
+    html += '<div class="bank-group-items">';
+
+    items.forEach(function(d) {
+      var interest = calcInterest(d.amount, d.rate, d.term);
+      var maturityAmount = d.amount + interest;
+      var isOverdue = d.status === 'active' && d.maturityDate < today;
+
+      var itemClass = 'deposit-item';
+      if (d.status === 'withdrawn') itemClass += ' withdrawn';
+      else if (isOverdue) itemClass += ' overdue';
+      else itemClass += ' soon';
+
+      // 右上角显示剩余期限（替代状态）
+      var remainClass = 'badge active';
+      var remainText = '';
+      if (d.status === 'withdrawn') {
+        remainText = '已提取';
+        remainClass = 'badge withdrawn';
+      } else {
+        var remDays = daysBetween(today, d.maturityDate);
+        if (remDays < 0) {
+          remainText = '已逾期' + Math.abs(remDays) + '天';
+          remainClass = 'badge overdue';
+        } else if (remDays === 0) {
+          remainText = '今天到期';
+        } else if (remDays >= 30) {
+          remainText = '剩' + Math.floor(remDays / 30) + '个月';
+        } else {
+          remainText = '剩' + remDays + '天';
+        }
+      }
+
+      html += '<div class="' + itemClass + '">';
+      html += '<div class="deposit-item-top">';
+      html += '<div class="deposit-item-amount"><span class="currency">¥</span>' + formatMoneyFull(d.amount) + '</div>';
+      html += '<span class="' + remainClass + '">' + remainText + '</span>';
+      html += '</div>';
+      html += '<div class="deposit-item-details">';
+      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + d.rate.toFixed(2) + '% / ' + d.term + '月</span></div>';
+      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日</span><span class="deposit-detail-value">' + d.maturityDate + '</span></div>';
+      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value" style="color:var(--success)">¥' + formatMoneyFull(interest) + '</span></div>';
+      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">到期总额</span><span class="deposit-detail-value" style="font-weight:700">¥' + formatMoneyFull(maturityAmount) + '</span></div>';
+      html += '</div>';
+      html += '<div class="deposit-actions">';
+      html += '<button class="deposit-action-btn" onclick="openEditForm(' + d.id + ')">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>去处理</button>';
+      html += '</div>';
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  return html;
+}
+
+function selectDay(day) {
+  if (selectedDay === day) {
+    selectedDay = null;
+  } else {
+    selectedDay = day;
+  }
+  renderCalendar();
+}
+
+// ========== Export / Import ==========
+function exportData() {
+  var data = loadData().filter(function(d) { return !d.sample; });
+  if (data.length === 0) { showToast('没有数据可导出'); return; }
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '小金库备份_' + todayStr() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  localStorage.setItem(EXPORT_KEY, String(Date.now()));
+  showToast('已导出 ' + data.length + ' 条记录');
+}
+
+function exportCSV() {
+  var data = loadData().filter(function(d) { return !d.sample; });
+  if (data.length === 0) { showToast('没有数据可导出'); return; }
+  var csv = '\uFEFF银行,金额(元),年利率(%),期限(月),存入日期,到期日期,预估利息(元),到期总额(元),状态,备注\n';
+  data.forEach(function(d) {
+    var interest = calcInterest(d.amount, d.rate, d.term);
+    var maturityAmount = d.amount + interest;
+    csv += (d.bank || '') + ',' + d.amount + ',' + d.rate + ',' + d.term + ',' + d.startDate + ',' + d.maturityDate + ',' + interest.toFixed(2) + ',' + maturityAmount.toFixed(2) + ',' + (d.status === 'active' ? '存入中' : '已提取') + ',' + (d.note || '') + '\n';
+  });
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '小金库_' + todayStr() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('CSV已导出');
+}
+
+function importData(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) { showToast('文件格式错误'); return; }
+      imported = imported.filter(function(d) { return !d.sample; });
+      showConfirm('导入恢复', '导入将替换当前所有数据，共导入 ' + imported.length + ' 条记录。确定继续吗？', function() {
+        saveData(imported);
+        renderAll();
+        showToast('导入成功，共 ' + imported.length + ' 条记录');
+      });
+    } catch(err) {
+      showToast('导入失败：文件格式错误');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ========== Render All ==========
+function renderAll() {
+  renderTodaySection();
+  renderSummary();
+  renderList();
+  if (!document.getElementById('calendarTab').classList.contains('hidden')) {
+    renderCalendar();
+  }
+}
+
+// ========== Init ==========
+function init() {
+  loadSampleData();
+  initCalendar();
+  initDateSelects();
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>
