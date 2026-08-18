@@ -304,15 +304,18 @@ body {
 .bank-group-items {
   display: grid;
   grid-template-rows: 1fr;
-  opacity: 1;
-  gap: 8px;
   margin-top: 8px;
-  transition: grid-template-rows 0.2s ease, opacity 0.2s ease;
+  transition: grid-template-rows 0.2s ease;
 }
-.bank-group-items > * { min-height: 0; }
+.bank-group-items > .bank-group-inner {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .bank-group.collapsed .bank-group-items {
   grid-template-rows: 0fr;
-  opacity: 0;
 }
 .deposit-item {
   background: var(--card-bg);
@@ -1109,7 +1112,7 @@ function renderList() {
     html += chevronSvg;
     html += '</div>';
     html += '</div>';
-    html += '<div class="bank-group-items">';
+    html += '<div class="bank-group-items"><div class="bank-group-inner">';
 
     deposits.forEach(function(d) {
       var isOverdue = d.status === 'active' && d.maturityDate && d.maturityDate < today;
@@ -1141,7 +1144,7 @@ function renderList() {
       html += '</div>';
     });
 
-    html += '</div></div>';
+    html += '</div></div></div>';
   });
 
   container.innerHTML = html;
@@ -1475,7 +1478,7 @@ function renderDepositCards(deposits) {
     html += '<div class="bank-group-left"><span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span></div>';
     html += '<div class="bank-group-meta"><span class="bank-group-count">' + items.length + '笔 · ¥' + formatMoney(bankTotal) + '</span>' + chevronSvg + '</div>';
     html += '</div>';
-    html += '<div class="bank-group-items">';
+    html += '<div class="bank-group-items"><div class="bank-group-inner">';
 
     items.forEach(function(d) {
       var isOverdue = d.status === 'active' && d.maturityDate && d.maturityDate < today;
@@ -1498,7 +1501,7 @@ function renderDepositCards(deposits) {
       html += '</div>';
     });
 
-    html += '</div></div>';
+    html += '</div></div></div>';
   });
 
   return html;
