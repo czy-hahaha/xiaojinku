@@ -37,6 +37,7 @@ body {
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -300,8 +301,19 @@ body {
 }
 .bank-group-chevron { width: 18px; height: 18px; color: var(--text-tertiary); transition: transform 0.2s; }
 .bank-group.collapsed .bank-group-chevron { transform: rotate(-90deg); }
-.bank-group-items { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-.bank-group.collapsed .bank-group-items { display: none; }
+.bank-group-items {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  gap: 8px;
+  margin-top: 8px;
+  transition: grid-template-rows 0.2s ease, opacity 0.2s ease;
+}
+.bank-group-items > * { min-height: 0; }
+.bank-group.collapsed .bank-group-items {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
 .deposit-item {
   background: var(--card-bg);
   border-radius: var(--radius-sm);
