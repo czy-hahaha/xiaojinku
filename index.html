@@ -1108,7 +1108,7 @@ function renderList() {
     html += '<span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span>';
     html += '</div>';
     html += '<div class="bank-group-meta">';
-    html += '<span class="bank-group-count">' + deposits.length + '笔 · ¥' + formatMoney(bankTotal) + '</span>';
+    html += '<span class="bank-group-count">¥' + formatMoney(bankTotal) + '</span>';
     html += chevronSvg;
     html += '</div>';
     html += '</div>';
@@ -1413,7 +1413,7 @@ function renderCalendar() {
     if (today.getFullYear() === calYear && today.getMonth() === m) cls += ' current-month';
     if (selectedMonth === m) cls += ' selected';
     var mAmount = mList.reduce(function(s, d) { return s + d.amount; }, 0);
-    var info = mList.length > 0 ? mList.length + ' 笔 ¥' + formatMoney(mAmount) : '无' + actionLabel;
+    var info = mList.length > 0 ? '¥' + formatMoney(mAmount) : '无' + actionLabel;
     html += '<div class="' + cls + '" onclick="selectMonth(' + m + ')">' +
       '<div class="month-name">' + monthNames[m] + '</div>' +
       '<div class="month-info">' + info + '</div>' +
@@ -1424,7 +1424,7 @@ function renderCalendar() {
   // 全年汇总
   var yearAmount = yearDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
   var summaryHtml = yearDeposits.length > 0
-    ? '本年' + actionLabel + ' <span>' + yearDeposits.length + '</span> 笔，本金 <span>¥' + formatMoney(yearAmount) + '</span>'
+    ? '本年' + actionLabel + '，本金 <span>¥' + formatMoney(yearAmount) + '</span>'
     : '本年无' + actionLabel + '记录';
   document.getElementById('calendarMonthSummary').innerHTML = summaryHtml;
 
@@ -1476,7 +1476,7 @@ function renderDepositCards(deposits) {
     html += '<div class="bank-group">';
     html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
     html += '<div class="bank-group-left"><span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span></div>';
-    html += '<div class="bank-group-meta"><span class="bank-group-count">' + items.length + '笔 · ¥' + formatMoney(bankTotal) + '</span>' + chevronSvg + '</div>';
+    html += '<div class="bank-group-meta"><span class="bank-group-count">¥' + formatMoney(bankTotal) + '</span>' + chevronSvg + '</div>';
     html += '</div>';
     html += '<div class="bank-group-items"><div class="bank-group-inner">';
 
