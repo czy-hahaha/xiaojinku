@@ -78,45 +78,13 @@ body {
   margin-bottom: 12px;
 }
 
-/* Today Section */
-.today-section { margin-bottom: 16px; }
+/* Section Title */
 .section-title {
   font-size: 16px; font-weight: 700;
   display: flex; align-items: center; gap: 6px;
   margin-bottom: 12px;
 }
 .section-title svg { width: 18px; height: 18px; }
-.today-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 8px;
-  gap: 8px;
-}
-.today-item.overdue { background: var(--danger-light); border-left: 3px solid var(--danger); }
-.today-item.soon { background: var(--warning-light); border-left: 3px solid var(--warning); }
-.today-item-info { flex: 1; min-width: 0; }
-.today-item-bank { font-weight: 600; font-size: 14px; }
-.today-item-amount { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
-.today-item-date { font-size: 12px; margin-top: 2px; }
-.today-item-date.overdue-text { color: var(--danger); font-weight: 600; }
-.today-item-date.soon-text { color: var(--warning); font-weight: 600; }
-.today-item-btn {
-  background: white;
-  border: 1px solid var(--primary);
-  color: var(--primary);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  min-height: 36px;
-  display: flex; align-items: center;
-  transition: all 0.2s;
-}
-.today-item-btn:hover { background: var(--primary); color: white; }
-.today-empty { text-align: center; color: var(--text-tertiary); padding: 20px 0; font-size: 14px; }
 
 /* Summary Cards */
 .summary-grid {
@@ -472,6 +440,10 @@ body {
 .year-cell .month-name { font-size: 15px; font-weight: 700; }
 .year-cell .month-info { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; }
 .year-cell.has-deposit .month-info { color: var(--primary); }
+.year-cell.selected { border-color: var(--primary); background: var(--primary); }
+.year-cell.selected .month-name { color: white; }
+.year-cell.selected .month-info { color: white; }
+.year-cell.selected.has-deposit .month-info { color: white; }
 
 /* Data Management */
 .data-mgmt { margin-top: 24px; padding: 16px; }
@@ -574,7 +546,7 @@ body {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l2-4h14l2 4"/><path d="M8 11h8"/></svg>
           小金库
         </div>
-        <div class="header-subtitle" id="headerSubtitle">我的存款，到期一目了然</div>
+        <div class="header-subtitle" id="headerSubtitle">我的存款，存入到期都清楚</div>
       </div>
       <div class="header-actions">
         <button class="icon-btn" onclick="exportData()" title="导出备份">
@@ -609,15 +581,6 @@ body {
     </div>
   </div>
 
-  <!-- Today Section -->
-  <div class="today-section card" id="todayCard">
-    <div class="section-title">
-      <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      今天要处理
-    </div>
-    <div id="todayList"></div>
-  </div>
-
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" id="tabList" onclick="switchTab('list')">
@@ -626,7 +589,7 @@ body {
     </div>
     <div class="tab" id="tabCalendar" onclick="switchTab('calendar')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      到期日历
+      存款日历
     </div>
   </div>
 
@@ -658,25 +621,26 @@ body {
         <div class="form-group">
           <label class="form-label">存款金额</label>
           <div class="input-suffix">
-            <input type="number" class="form-input" id="inputAmount" placeholder="10000" step="0.01">
+            <input type="number" class="form-input" id="inputAmount" placeholder="10000" step="1" min="0">
             <span class="suffix">元</span>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">年利率</label>
+          <label class="form-label">年利率 <span style="color:var(--text-tertiary);font-weight:400">（活期可不填）</span></label>
           <div class="input-suffix">
-            <input type="number" class="form-input" id="inputRate" placeholder="3.0" step="0.01">
+            <input type="number" class="form-input" id="inputRate" placeholder="2.5" step="0.01" min="0">
             <span class="suffix">%</span>
           </div>
         </div>
       </div>
       <div class="form-group full">
-        <label class="form-label">存款期限</label>
+        <label class="form-label">存款期限 <span style="color:var(--text-tertiary);font-weight:400">（活期可不填）</span></label>
         <div class="input-suffix">
-          <input type="number" class="form-input" id="inputTerm" placeholder="12" min="1" step="1">
+          <input type="number" class="form-input" id="inputTerm" placeholder="不填即为活期" step="1" min="0">
           <span class="suffix">个月</span>
         </div>
         <div class="term-chips">
+          <div class="term-chip" onclick="setTerm('')">活期</div>
           <div class="term-chip" onclick="setTerm(3)">3个月</div>
           <div class="term-chip" onclick="setTerm(6)">6个月</div>
           <div class="term-chip" onclick="setTerm(12)">1年</div>
@@ -721,11 +685,11 @@ body {
         </button>
       </div>
       <div class="view-toggle">
-        <button class="view-toggle-btn active" id="btnMonthView" onclick="setCalView('month')">按月</button>
-        <button class="view-toggle-btn" id="btnYearView" onclick="setCalView('year')">按年</button>
+        <button class="view-toggle-btn active" id="btnMaturityView" onclick="setCalMode('maturity')">到期</button>
+        <button class="view-toggle-btn" id="btnDepositView" onclick="setCalMode('deposit')">存入</button>
       </div>
       <div class="calendar-month-summary" id="calendarMonthSummary"></div>
-      <div class="calendar-grid" id="calendarGrid"></div>
+      <div class="calendar-grid year-mode" id="calendarGrid"></div>
     </div>
     <div class="calendar-detail card" id="calendarDetail">
       <div class="calendar-detail-title" id="calendarDetailTitle">本月到期存款</div>
@@ -814,6 +778,7 @@ function addMonths(dateStr, months) {
 }
 
 function calcInterest(amount, rate, termMonths) {
+  if (!termMonths || !rate) return 0;
   return amount * (rate / 100) * (termMonths / 12);
 }
 
@@ -822,14 +787,15 @@ function calcMaturityDate(startDate, termMonths) {
 }
 
 function formatMoney(num) {
-  if (num >= 10000) {
-    return (num / 10000).toFixed(2) + ' 万';
+  num = Math.round(num);
+  if (num >= 1000000) {
+    return Math.round(num / 10000) + ' 万';
   }
-  return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return num.toLocaleString('zh-CN');
 }
 
 function formatMoneyFull(num) {
-  return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return Math.round(num).toLocaleString('zh-CN');
 }
 
 function daysBetween(dateStr1, dateStr2) {
@@ -998,70 +964,23 @@ function loadSampleData() {
       note: '三年期大额存单',
       status: 'active',
       createdAt: Date.now() - 1000000
+    },
+    {
+      id: generateId(),
+      bank: '工商银行',
+      amount: 15000,
+      rate: 0.25,
+      term: null,
+      startDate: '2026-08-16',
+      maturityDate: '',
+      note: '活期备用金',
+      status: 'active',
+      createdAt: Date.now() - 500000
     }
   ];
   samples.forEach(function(s) { s.sample = true; });
   saveData(samples);
   localStorage.setItem(SAMPLE_KEY, '1');
-}
-
-// ========== Today Section ==========
-function getOverdueDeposits() {
-  const data = loadData();
-  const today = todayStr();
-  return data.filter(function(d) {
-    return d.status === 'active' && d.maturityDate < today;
-  }).sort(function(a, b) { return a.maturityDate < b.maturityDate ? -1 : 1; });
-}
-
-function getSoonDeposits() {
-  const data = loadData();
-  const today = todayStr();
-  const soon = formatDate(new Date(Date.now() + 7 * 86400000));
-  return data.filter(function(d) {
-    return d.status === 'active' && d.maturityDate >= today && d.maturityDate <= soon;
-  }).sort(function(a, b) { return a.maturityDate < b.maturityDate ? -1 : 1; });
-}
-
-function renderTodaySection() {
-  const container = document.getElementById('todayList');
-  const overdue = getOverdueDeposits();
-  const soon = getSoonDeposits();
-
-  if (overdue.length === 0 && soon.length === 0) {
-    container.innerHTML = '<div class="today-empty">近期没有需要处理的存款</div>';
-    return;
-  }
-
-  var html = '';
-  overdue.forEach(function(d) {
-    var days = daysBetween(d.maturityDate, todayStr());
-    var interest = calcInterest(d.amount, d.rate, d.term);
-    html += '<div class="today-item overdue">' +
-      '<div class="today-item-info">' +
-        '<div class="today-item-bank">' + escapeHtml(d.bank || '未填写银行') + '</div>' +
-        '<div class="today-item-amount">' + formatMoneyFull(d.amount) + ' 元 / 利息 ' + formatMoneyFull(interest) + ' 元</div>' +
-        '<div class="today-item-date overdue-text">已逾期 ' + days + ' 天（' + d.maturityDate + ' 到期）</div>' +
-      '</div>' +
-      '<button class="today-item-btn" onclick="openEditForm(' + d.id + ')">去处理</button>' +
-    '</div>';
-  });
-
-  soon.forEach(function(d) {
-    var days = daysBetween(todayStr(), d.maturityDate);
-    var interest = calcInterest(d.amount, d.rate, d.term);
-    var dayText = days === 0 ? '今天到期' : days + ' 天后到期';
-    html += '<div class="today-item soon">' +
-      '<div class="today-item-info">' +
-        '<div class="today-item-bank">' + escapeHtml(d.bank || '未填写银行') + '</div>' +
-        '<div class="today-item-amount">' + formatMoneyFull(d.amount) + ' 元 / 利息 ' + formatMoneyFull(interest) + ' 元</div>' +
-        '<div class="today-item-date soon-text">' + dayText + '（' + d.maturityDate + '）</div>' +
-      '</div>' +
-      '<button class="today-item-btn" onclick="openEditForm(' + d.id + ')">去处理</button>' +
-    '</div>';
-  });
-
-  container.innerHTML = html;
 }
 
 // ========== Summary ==========
@@ -1103,6 +1022,34 @@ function renderSummary() {
 }
 
 // ========== Deposit List ==========
+// 剩余期限/状态徽章（支持活期）
+function depositRemainBadge(d) {
+  var today = todayStr();
+  if (d.status === 'withdrawn') return '<span class="badge withdrawn">已提取</span>';
+  if (!d.maturityDate) return '<span class="badge active">活期</span>';
+  var remDays = daysBetween(today, d.maturityDate);
+  if (remDays < 0) return '<span class="badge overdue">已逾期' + Math.abs(remDays) + '天</span>';
+  if (remDays === 0) return '<span class="badge active">今天到期</span>';
+  if (remDays >= 30) return '<span class="badge active">剩' + Math.floor(remDays / 30) + '个月</span>';
+  return '<span class="badge active">剩' + remDays + '天</span>';
+}
+
+// 明细行（支持活期：利率/期限/利息/到期总额显示 —）
+function depositDetailHtml(d) {
+  var interest = calcInterest(d.amount, d.rate, d.term);
+  var rateText = d.rate ? d.rate.toFixed(2) + '%' : '—';
+  var termText = d.term ? d.term + '月' : '活期';
+  var maturityText = d.maturityDate ? d.maturityDate : '活期（随时可取）';
+  var interestText = d.term ? '<span style="color:var(--success)">¥' + formatMoneyFull(interest) + '</span>' : '—';
+  var maturityAmountText = d.term ? '<span style="font-weight:700">¥' + formatMoneyFull(d.amount + interest) + '</span>' : '—';
+  return '<div class="deposit-item-details">' +
+    '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + rateText + ' / ' + termText + '</span></div>' +
+    '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日</span><span class="deposit-detail-value">' + maturityText + '</span></div>' +
+    '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value">' + interestText + '</span></div>' +
+    '<div class="deposit-detail-item"><span class="deposit-detail-label">到期总额</span><span class="deposit-detail-value">' + maturityAmountText + '</span></div>' +
+  '</div>';
+}
+
 function renderList() {
   var data = loadData();
   var container = document.getElementById('depositList');
@@ -1116,6 +1063,9 @@ function renderList() {
   }
 
   data.sort(function(a, b) {
+    // 活期（无到期日）排最后，其余按到期日由近到远
+    if (!a.maturityDate) return 1;
+    if (!b.maturityDate) return -1;
     return a.maturityDate < b.maturityDate ? -1 : 1;
   });
 
@@ -1135,7 +1085,7 @@ function renderList() {
   bankOrder.forEach(function(bankKey) {
     var deposits = groups[bankKey];
     var bankTotal = deposits.reduce(function(s, d) { return s + d.amount; }, 0);
-    var hasOverdue = deposits.some(function(d) { return d.status === 'active' && d.maturityDate < today; });
+    var hasOverdue = deposits.some(function(d) { return d.status === 'active' && d.maturityDate && d.maturityDate < today; });
 
     html += '<div class="bank-group' + (hasOverdue ? '' : ' collapsed') + '">';
     html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
@@ -1150,46 +1100,19 @@ function renderList() {
     html += '<div class="bank-group-items">';
 
     deposits.forEach(function(d) {
-      var interest = calcInterest(d.amount, d.rate, d.term);
-      var maturityAmount = d.amount + interest;
-      var isOverdue = d.status === 'active' && d.maturityDate < today;
-      var isSoon = d.status === 'active' && d.maturityDate >= today && d.maturityDate <= formatDate(new Date(Date.now() + 7 * 86400000));
+      var isOverdue = d.status === 'active' && d.maturityDate && d.maturityDate < today;
+      var isSoon = d.status === 'active' && d.maturityDate && d.maturityDate >= today && d.maturityDate <= formatDate(new Date(Date.now() + 7 * 86400000));
       var itemClass = 'deposit-item';
       if (d.status === 'withdrawn') itemClass += ' withdrawn';
       else if (isOverdue) itemClass += ' overdue';
       else if (isSoon) itemClass += ' soon';
 
-      // 右上角显示剩余期限（替代状态）
-      var remainClass = 'badge active';
-      var remainText = '';
-      if (d.status === 'withdrawn') {
-        remainText = '已提取';
-        remainClass = 'badge withdrawn';
-      } else {
-        var remDays = daysBetween(today, d.maturityDate);
-        if (remDays < 0) {
-          remainText = '已逾期' + Math.abs(remDays) + '天';
-          remainClass = 'badge overdue';
-        } else if (remDays === 0) {
-          remainText = '今天到期';
-        } else if (remDays >= 30) {
-          remainText = '剩' + Math.floor(remDays / 30) + '个月';
-        } else {
-          remainText = '剩' + remDays + '天';
-        }
-      }
-
       html += '<div class="' + itemClass + '">';
       html += '<div class="deposit-item-top">';
       html += '<div class="deposit-item-amount"><span class="currency">¥</span>' + formatMoneyFull(d.amount) + '</div>';
-      html += '<span class="' + remainClass + '">' + remainText + '</span>';
+      html += depositRemainBadge(d);
       html += '</div>';
-      html += '<div class="deposit-item-details">';
-      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + d.rate.toFixed(2) + '% / ' + d.term + '月</span></div>';
-      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日</span><span class="deposit-detail-value">' + d.maturityDate + '</span></div>';
-      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value" style="color:var(--success)">¥' + formatMoneyFull(interest) + '</span></div>';
-      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">到期总额</span><span class="deposit-detail-value" style="font-weight:700">¥' + formatMoneyFull(maturityAmount) + '</span></div>';
-      html += '</div>';
+      html += depositDetailHtml(d);
 
       if (d.note) {
         html += '<div class="deposit-note">' + escapeHtml(d.note) + '</div>';
@@ -1251,8 +1174,8 @@ function openEditForm(id) {
   document.getElementById('editId').value = d.id;
   document.getElementById('inputBank').value = d.bank || '';
   document.getElementById('inputAmount').value = d.amount;
-  document.getElementById('inputRate').value = d.rate;
-  document.getElementById('inputTerm').value = d.term;
+  document.getElementById('inputRate').value = d.rate == null ? '' : d.rate;
+  document.getElementById('inputTerm').value = d.term == null ? '' : d.term;
   setStartDateStr(d.startDate);
   document.getElementById('inputNote').value = d.note || '';
   document.getElementById('editStatus').value = d.status || 'active';
@@ -1264,8 +1187,12 @@ function openEditForm(id) {
   // Sync term chip active state
   document.querySelectorAll('.term-chip').forEach(function(c) {
     c.classList.remove('active');
-    var termText = c.textContent.replace(/[^\d]/g, '');
-    if (parseInt(termText) === d.term) c.classList.add('active');
+    if (d.term) {
+      var termText = c.textContent.replace(/[^\d]/g, '');
+      if (parseInt(termText) === d.term) c.classList.add('active');
+    } else {
+      if (c.textContent.indexOf('活期') >= 0) c.classList.add('active');
+    }
   });
 
   var form = document.getElementById('addForm');
@@ -1287,18 +1214,21 @@ function setTerm(months) {
 function submitDeposit() {
   var editId = document.getElementById('editId').value;
   var bank = document.getElementById('inputBank').value.trim();
-  var amount = parseFloat(document.getElementById('inputAmount').value);
-  var rate = parseFloat(document.getElementById('inputRate').value);
-  var term = parseInt(document.getElementById('inputTerm').value);
+  var amountRaw = document.getElementById('inputAmount').value.trim();
+  var amount = parseFloat(amountRaw);
+  var rateRaw = document.getElementById('inputRate').value.trim();
+  var rate = rateRaw === '' ? null : parseFloat(rateRaw);
+  var termRaw = document.getElementById('inputTerm').value.trim();
+  var term = termRaw === '' ? null : parseInt(termRaw);
   var startDate = getStartDateStr();
   var note = document.getElementById('inputNote').value.trim();
 
-  if (!amount || amount <= 0) { showToast('请输入有效的存款金额'); return; }
-  if (!rate || rate <= 0) { showToast('请输入有效的年利率'); return; }
-  if (!term || term <= 0) { showToast('请输入有效的存款期限'); return; }
+  if (!amount || amount <= 0 || Math.floor(amount) !== amount) { showToast('请输入整数金额（元）'); return; }
+  if (rate !== null && (isNaN(rate) || rate < 0)) { showToast('请输入有效的年利率'); return; }
+  if (term !== null && (isNaN(term) || term <= 0)) { showToast('请输入有效的存款期限'); return; }
   if (!startDate) { showToast('请选择存入日期'); return; }
 
-  var maturityDate = calcMaturityDate(startDate, term);
+  var maturityDate = term ? calcMaturityDate(startDate, term) : '';
   var data = loadData();
 
   if (editId) {
@@ -1397,53 +1327,45 @@ function switchTab(tab) {
 }
 
 // ========== Calendar ==========
-var calYear, calMonth, selectedDay = null, calendarView = 'month';
+var calYear, selectedMonth = null, calendarMode = 'maturity';
 
 function initCalendar() {
-  var now = new Date();
-  calYear = now.getFullYear();
-  calMonth = now.getMonth();
+  calYear = new Date().getFullYear();
+  selectedMonth = null;
 }
 
-function setCalView(view) {
-  calendarView = view;
-  selectedDay = null;
-  document.getElementById('btnMonthView').classList.toggle('active', view === 'month');
-  document.getElementById('btnYearView').classList.toggle('active', view === 'year');
+function setCalMode(mode) {
+  calendarMode = mode;
+  selectedMonth = null;
+  document.getElementById('btnMaturityView').classList.toggle('active', mode === 'maturity');
+  document.getElementById('btnDepositView').classList.toggle('active', mode === 'deposit');
   renderCalendar();
 }
 
 function calPrev() {
-  if (calendarView === 'year') { calYear--; }
-  else {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-  }
-  selectedDay = null;
+  calYear--;
+  selectedMonth = null;
   renderCalendar();
 }
 
 function calNext() {
-  if (calendarView === 'year') { calYear++; }
-  else {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
-  }
-  selectedDay = null;
+  calYear++;
+  selectedMonth = null;
   renderCalendar();
 }
 
-function openMonth(m) {
-  calMonth = m;
-  selectedDay = null;
-  setCalView('month');
+function selectMonth(m) {
+  selectedMonth = (selectedMonth === m) ? null : m;
+  renderCalendar();
 }
 
-function getDepositsInPeriod(startStr, endStr) {
-  var data = loadData();
-  return data.filter(function(d) {
-    return d.status === 'active' && d.maturityDate >= startStr && d.maturityDate <= endStr;
-  }).sort(function(a, b) { return a.maturityDate < b.maturityDate ? -1 : 1; });
+// 取某年某月、指定日期字段（startDate=存入 / maturityDate=到期）的记录
+function getMonthDeposits(deposits, year, month, dateField) {
+  var mStart = year + '-' + String(month + 1).padStart(2, '0') + '-01';
+  var mEnd = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(new Date(year, month + 1, 0).getDate());
+  return deposits.filter(function(d) {
+    return d[dateField] && d[dateField] >= mStart && d[dateField] <= mEnd;
+  });
 }
 
 function renderCalendar() {
@@ -1451,138 +1373,68 @@ function renderCalendar() {
   var titleEl = document.getElementById('calendarTitle');
   var gridEl = document.getElementById('calendarGrid');
   var today = new Date();
-  var todayDateStr = formatDate(today);
+  var dateField = calendarMode === 'deposit' ? 'startDate' : 'maturityDate';
+  var actionLabel = calendarMode === 'deposit' ? '存入' : '到期';
 
-  if (calendarView === 'year') {
-    titleEl.textContent = calYear + '年';
-    gridEl.classList.add('year-mode');
+  titleEl.textContent = calYear + '年';
 
-    var yearStart = calYear + '-01-01';
-    var yearEnd = calYear + '-12-31';
-    var yearDeposits = getDepositsInPeriod(yearStart, yearEnd);
-
-    var html = '';
-    for (var m = 0; m < 12; m++) {
-      var mStart = calYear + '-' + String(m + 1).padStart(2, '0') + '-01';
-      var mEnd = calYear + '-' + String(m + 1).padStart(2, '0') + '-' + String(new Date(calYear, m + 1, 0).getDate());
-      var mList = yearDeposits.filter(function(d) { return d.maturityDate >= mStart && d.maturityDate <= mEnd; });
-      var cls = 'year-cell';
-      if (mList.length > 0) cls += ' has-deposit';
-      if (today.getFullYear() === calYear && today.getMonth() === m) cls += ' current-month';
-      var mAmount = mList.reduce(function(s, d) { return s + d.amount; }, 0);
-      var info = mList.length > 0
-        ? mList.length + ' 笔 ¥' + formatMoney(mAmount)
-        : '无到期';
-      html += '<div class="' + cls + '" onclick="openMonth(' + m + ')">' +
-        '<div class="month-name">' + monthNames[m] + '</div>' +
-        '<div class="month-info">' + info + '</div>' +
-      '</div>';
-    }
-    gridEl.innerHTML = html;
-
-    var yearAmount = yearDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
-    var yearInterest = yearDeposits.reduce(function(s, d) { return s + calcInterest(d.amount, d.rate, d.term); }, 0);
-    var summaryHtml = yearDeposits.length > 0
-      ? '本年到期 <span>' + yearDeposits.length + '</span> 笔，本金 <span>¥' + formatMoney(yearAmount) + '</span>，利息 <span>¥' + formatMoney(yearInterest) + '</span>'
-      : '本年无到期存款';
-    document.getElementById('calendarMonthSummary').innerHTML = summaryHtml;
-
-    renderCalendarDetail(yearDeposits, true);
-    return;
+  var all = loadData();
+  if (calendarMode === 'maturity') {
+    all = all.filter(function(d) { return d.status === 'active'; });
   }
 
-  // ---- Month View ----
-  gridEl.classList.remove('year-mode');
-  titleEl.textContent = calYear + '年 ' + monthNames[calMonth];
+  var yearStart = calYear + '-01-01';
+  var yearEnd = calYear + '-12-31';
+  var yearDeposits = all.filter(function(d) {
+    return d[dateField] && d[dateField] >= yearStart && d[dateField] <= yearEnd;
+  }).sort(function(a, b) { return a[dateField] < b[dateField] ? -1 : 1; });
 
-  var monthStart = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-01';
-  var monthEnd = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(new Date(calYear, calMonth + 1, 0).getDate());
-  var monthDeposits = getDepositsInPeriod(monthStart, monthEnd);
-
-  // Build deposit date map
-  var depositMap = {};
-  monthDeposits.forEach(function(d) {
-    var day = parseDate(d.maturityDate).getDate();
-    if (!depositMap[day]) depositMap[day] = [];
-    depositMap[day].push(d);
-  });
-
-  // Weekday headers
-  var weekdays = ['日','一','二','三','四','五','六'];
+  // 12 宫格
   var html = '';
-  weekdays.forEach(function(w) {
-    html += '<div class="calendar-weekday">' + w + '</div>';
-  });
-
-  // Calendar days
-  var firstDay = new Date(calYear, calMonth, 1);
-  var startWeekday = firstDay.getDay();
-  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  var prevMonthDays = new Date(calYear, calMonth, 0).getDate();
-
-  // Previous month trailing days
-  for (var i = startWeekday - 1; i >= 0; i--) {
-    html += '<div class="calendar-cell other-month"><span class="day-num">' + (prevMonthDays - i) + '</span></div>';
+  for (var m = 0; m < 12; m++) {
+    var mList = getMonthDeposits(all, calYear, m, dateField);
+    var cls = 'year-cell';
+    if (mList.length > 0) cls += ' has-deposit';
+    if (today.getFullYear() === calYear && today.getMonth() === m) cls += ' current-month';
+    if (selectedMonth === m) cls += ' selected';
+    var mAmount = mList.reduce(function(s, d) { return s + d.amount; }, 0);
+    var info = mList.length > 0 ? mList.length + ' 笔 ¥' + formatMoney(mAmount) : '无' + actionLabel;
+    html += '<div class="' + cls + '" onclick="selectMonth(' + m + ')">' +
+      '<div class="month-name">' + monthNames[m] + '</div>' +
+      '<div class="month-info">' + info + '</div>' +
+    '</div>';
   }
-
-  // Current month days
-  for (var day = 1; day <= daysInMonth; day++) {
-    var classes = 'calendar-cell';
-    var dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-    if (dateStr === todayDateStr) classes += ' today';
-    if (depositMap[day]) classes += ' has-deposit';
-    if (selectedDay === day) classes += ' selected';
-
-    html += '<div class="' + classes + '" onclick="selectDay(' + day + ')"><span class="day-num">' + day + '</span></div>';
-  }
-
-  // Next month leading days
-  var totalCells = startWeekday + daysInMonth;
-  var trailing = (7 - (totalCells % 7)) % 7;
-  for (var j = 1; j <= trailing; j++) {
-    html += '<div class="calendar-cell other-month"><span class="day-num">' + j + '</span></div>';
-  }
-
   gridEl.innerHTML = html;
 
-  // Month summary
-  var monthAmount = monthDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
-  var monthInterest = monthDeposits.reduce(function(s, d) { return s + calcInterest(d.amount, d.rate, d.term); }, 0);
-
-  var summaryHtml = '';
-  if (monthDeposits.length > 0) {
-    summaryHtml = '本月到期 <span>' + monthDeposits.length + '</span> 笔，本金 <span>¥' + formatMoney(monthAmount) + '</span>，利息 <span>¥' + formatMoney(monthInterest) + '</span>';
-  } else {
-    summaryHtml = '本月无到期存款';
-  }
+  // 全年汇总
+  var yearAmount = yearDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
+  var summaryHtml = yearDeposits.length > 0
+    ? '本年' + actionLabel + ' <span>' + yearDeposits.length + '</span> 笔，本金 <span>¥' + formatMoney(yearAmount) + '</span>'
+    : '本年无' + actionLabel + '记录';
   document.getElementById('calendarMonthSummary').innerHTML = summaryHtml;
 
-  // Detail panel
-  renderCalendarDetail(monthDeposits, false);
+  // 详情：选中月份看该月，未选中看全年
+  var detailDeposits = selectedMonth !== null
+    ? getMonthDeposits(all, calYear, selectedMonth, dateField)
+    : yearDeposits;
+  renderCalendarDetail(detailDeposits, selectedMonth);
 }
 
-function renderCalendarDetail(monthDeposits, isYear) {
+function renderCalendarDetail(deposits, month) {
   var title = document.getElementById('calendarDetailTitle');
   var content = document.getElementById('calendarDetailContent');
+  var actionLabel = calendarMode === 'deposit' ? '存入' : '到期';
+  var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
-  if (selectedDay && !isYear) {
-    var dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(selectedDay).padStart(2, '0');
-    title.textContent = selectedDay + '日到期存款（' + dateStr + '）';
-    var dayDeposits = monthDeposits.filter(function(d) {
-      return d.maturityDate === dateStr;
-    });
-    if (dayDeposits.length === 0) {
-      content.innerHTML = '<div class="calendar-detail-empty">这一天没有存款到期</div>';
-    } else {
-      content.innerHTML = renderDepositCards(dayDeposits);
-    }
+  if (month !== null) {
+    title.textContent = calYear + '年' + monthNames[month] + actionLabel + '存款';
   } else {
-    title.textContent = isYear ? (calYear + '年到期存款') : '本月到期存款';
-    if (monthDeposits.length === 0) {
-      content.innerHTML = '<div class="calendar-detail-empty">' + (isYear ? '今年没有存款到期' : '本月没有存款到期') + '</div>';
-    } else {
-      content.innerHTML = renderDepositCards(monthDeposits);
-    }
+    title.textContent = calYear + '年' + actionLabel + '存款';
+  }
+  if (deposits.length === 0) {
+    content.innerHTML = '<div class="calendar-detail-empty">' + (month !== null ? '这个月没有存款记录' : '今年没有存款记录') + '</div>';
+  } else {
+    content.innerHTML = renderDepositCards(deposits);
   }
 }
 
@@ -1599,6 +1451,7 @@ function renderDepositCards(deposits) {
   });
 
   var bankIconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/></svg>';
+  var chevronSvg = '<svg class="bank-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>';
 
   var html = '';
   bankOrder.forEach(function(bankKey) {
@@ -1608,52 +1461,24 @@ function renderDepositCards(deposits) {
     html += '<div class="bank-group">';
     html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
     html += '<div class="bank-group-left"><span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span></div>';
-    html += '<div class="bank-group-meta"><span>' + items.length + '笔 · ¥' + formatMoney(bankTotal) + '</span>';
-    html += '<svg class="bank-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>';
+    html += '<div class="bank-group-meta"><span class="bank-group-count">' + items.length + '笔 · ¥' + formatMoney(bankTotal) + '</span>' + chevronSvg + '</div>';
     html += '</div>';
     html += '<div class="bank-group-items">';
 
     items.forEach(function(d) {
-      var interest = calcInterest(d.amount, d.rate, d.term);
-      var maturityAmount = d.amount + interest;
-      var isOverdue = d.status === 'active' && d.maturityDate < today;
+      var isOverdue = d.status === 'active' && d.maturityDate && d.maturityDate < today;
 
       var itemClass = 'deposit-item';
       if (d.status === 'withdrawn') itemClass += ' withdrawn';
       else if (isOverdue) itemClass += ' overdue';
       else itemClass += ' soon';
 
-      // 右上角显示剩余期限（替代状态）
-      var remainClass = 'badge active';
-      var remainText = '';
-      if (d.status === 'withdrawn') {
-        remainText = '已提取';
-        remainClass = 'badge withdrawn';
-      } else {
-        var remDays = daysBetween(today, d.maturityDate);
-        if (remDays < 0) {
-          remainText = '已逾期' + Math.abs(remDays) + '天';
-          remainClass = 'badge overdue';
-        } else if (remDays === 0) {
-          remainText = '今天到期';
-        } else if (remDays >= 30) {
-          remainText = '剩' + Math.floor(remDays / 30) + '个月';
-        } else {
-          remainText = '剩' + remDays + '天';
-        }
-      }
-
       html += '<div class="' + itemClass + '">';
       html += '<div class="deposit-item-top">';
       html += '<div class="deposit-item-amount"><span class="currency">¥</span>' + formatMoneyFull(d.amount) + '</div>';
-      html += '<span class="' + remainClass + '">' + remainText + '</span>';
+      html += depositRemainBadge(d);
       html += '</div>';
-      html += '<div class="deposit-item-details">';
-      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + d.rate.toFixed(2) + '% / ' + d.term + '月</span></div>';
-      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日</span><span class="deposit-detail-value">' + d.maturityDate + '</span></div>';
-      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value" style="color:var(--success)">¥' + formatMoneyFull(interest) + '</span></div>';
-      html += '<div class="deposit-detail-item"><span class="deposit-detail-label">到期总额</span><span class="deposit-detail-value" style="font-weight:700">¥' + formatMoneyFull(maturityAmount) + '</span></div>';
-      html += '</div>';
+      html += depositDetailHtml(d);
       html += '<div class="deposit-actions">';
       html += '<button class="deposit-action-btn" onclick="openEditForm(' + d.id + ')">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>去处理</button>';
@@ -1665,15 +1490,6 @@ function renderDepositCards(deposits) {
   });
 
   return html;
-}
-
-function selectDay(day) {
-  if (selectedDay === day) {
-    selectedDay = null;
-  } else {
-    selectedDay = day;
-  }
-  renderCalendar();
 }
 
 // ========== Export / Import ==========
@@ -1697,11 +1513,15 @@ function exportData() {
 function exportCSV() {
   var data = loadData().filter(function(d) { return !d.sample; });
   if (data.length === 0) { showToast('没有数据可导出'); return; }
-  var csv = '\uFEFF银行,金额(元),年利率(%),期限(月),存入日期,到期日期,预估利息(元),到期总额(元),状态,备注\n';
+  var csv = '\uFEFF银行,金额(元),年利率(%),期限,存入日期,到期日期,预估利息(元),到期总额(元),状态,备注\n';
   data.forEach(function(d) {
     var interest = calcInterest(d.amount, d.rate, d.term);
-    var maturityAmount = d.amount + interest;
-    csv += (d.bank || '') + ',' + d.amount + ',' + d.rate + ',' + d.term + ',' + d.startDate + ',' + d.maturityDate + ',' + interest.toFixed(2) + ',' + maturityAmount.toFixed(2) + ',' + (d.status === 'active' ? '存入中' : '已提取') + ',' + (d.note || '') + '\n';
+    var rateTxt = d.rate == null ? '' : d.rate;
+    var termTxt = d.term == null ? '活期' : d.term;
+    var maturityTxt = d.maturityDate || '活期';
+    var interestTxt = d.term ? Math.round(interest) : '';
+    var maturityAmountTxt = d.term ? Math.round(d.amount + interest) : '';
+    csv += (d.bank || '') + ',' + d.amount + ',' + rateTxt + ',' + termTxt + ',' + d.startDate + ',' + maturityTxt + ',' + interestTxt + ',' + maturityAmountTxt + ',' + (d.status === 'active' ? '存入中' : '已提取') + ',' + (d.note || '') + '\n';
   });
   var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   var url = URL.createObjectURL(blob);
@@ -1739,7 +1559,6 @@ function importData(event) {
 
 // ========== Render All ==========
 function renderAll() {
-  renderTodaySection();
   renderSummary();
   renderList();
   if (!document.getElementById('calendarTab').classList.contains('hidden')) {
