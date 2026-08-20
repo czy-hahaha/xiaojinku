@@ -637,7 +637,7 @@ body {
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">存入日期</label>
+          <label class="form-label" id="startDateLabel">存入日期</label>
           <div class="date-selects">
             <select class="form-select date-sel" id="selYear"></select>
             <select class="form-select date-sel" id="selMonth"></select>
@@ -678,9 +678,9 @@ body {
       <div class="form-group full hidden" id="renewToggleGroup">
         <label class="renew-toggle">
           <input type="checkbox" id="renewToggle" onchange="toggleRenew()">
-          <span>续存本期（存入日期不变，到期日顺延）</span>
+          <span>续存本期（日期改为续存日期，初次存入日不变）</span>
         </label>
-        <div class="renew-hint hidden" id="renewHint">续存不改动存入日期，到期日按新期限从上次到期日顺延</div>
+        <div class="renew-hint hidden" id="renewHint">勾选后上方的日期即为「续存日期」，可修改；提交后初次存入日保持不变，到期日按续存日期和新期限重算</div>
       </div>
       <div class="form-group full hidden" id="editStatusGroup">
         <label class="form-label">状态</label>
@@ -1197,6 +1197,7 @@ function resetAddForm() {
   var rg = document.getElementById('renewToggleGroup');
   if (rg) { rg.classList.add('hidden'); }
   currentDateLocked = false;
+  document.getElementById('startDateLabel').textContent = '存入日期';
   document.getElementById('selYear').disabled = false;
   document.getElementById('selMonth').disabled = false;
   document.getElementById('selDay').disabled = false;
@@ -1293,17 +1294,33 @@ function openEditForm(id) {
 // 当前编辑记录是否锁定存入日期（续存过的记录=true，不可改）
 var currentDateLocked = false;
 
-// 续存开关：勾选后锁定存入日期，标题切换为续存
+// 续存开关：勾选后日期字段变为「续存日期」（可编辑，后台初次存入日不变），标题切换为续存
 function toggleRenew() {
   var on = document.getElementById('renewToggle').checked;
   document.getElementById('renewHint').classList.toggle('hidden', !on);
-  document.getElementById('selYear').disabled = on || currentDateLocked;
-  document.getElementById('selMonth').disabled = on || currentDateLocked;
-  document.getElementById('selDay').disabled = on || currentDateLocked;
+  var label = document.getElementById('startDateLabel');
+  var sy = document.getElementById('selYear');
+  var sm = document.getElementById('selMonth');
+  var sd = document.getElementById('selDay');
+  // 当前编辑的记录（勾选时把日期切到续存日期，取消时切回存入日期）
+  var id = document.getElementById('editId').value;
+  var d = null;
+  if (id) {
+    var data = loadData();
+    d = data.find(function(x) { return x.id == id; });
+  }
   if (on) {
+    // 续存模式：日期 = 续存日期，可编辑，默认当前到期日
+    label.textContent = '续存日期';
+    sy.disabled = false; sm.disabled = false; sd.disabled = false;
+    if (d) setStartDateStr(d.maturityDate || todayStr());
     document.getElementById('formTitle').textContent = '续存存款';
     document.getElementById('formSubmitText').textContent = '确认续存';
   } else {
+    // 普通编辑：日期 = 存入日期；续存过的记录锁定（初次存入日不可改）
+    label.textContent = '存入日期';
+    sy.disabled = currentDateLocked; sm.disabled = currentDateLocked; sd.disabled = currentDateLocked;
+    if (d) setStartDateStr(d.startDate || todayStr());
     document.getElementById('formTitle').textContent = '编辑存款记录';
     document.getElementById('formSubmitText').textContent = '保存修改';
   }
@@ -1341,9 +1358,9 @@ function submitDeposit() {
     var item = data.find(function(d) { return d.id == editId; });
     if (!item) { showToast('记录不存在'); return; }
 
-    // 续存：存入日期保持不变，到期日从上次到期日按新期限顺延
+    // 续存：表单日期视为续存日期，后台存入日期(初次存入日)保持不变，到期日按续存日期+新期限重算
     if (document.getElementById('renewToggle').checked) {
-      applyRenew(item, term, rate);
+      applyRenew(item, term, rate, startDate);
       saveData(data);
       toggleAddForm();
       renderAll();
@@ -1397,12 +1414,11 @@ function submitDeposit() {
   }
 }
 
-// 续存：存入日期(startDate)保持不变，到期日从上次到期日按新期限顺延
-function applyRenew(item, term, rate) {
-  var base = item.maturityDate || item.startDate;
+// 续存：后台存入日期(startDate=初次存入日)保持不变，到期日从续存日期(renewalDate)按新期限计算
+function applyRenew(item, term, rate, renewalDate) {
   item.term = term;
   item.rate = rate;
-  item.maturityDate = term ? calcMaturityDate(base, term) : '';
+  item.maturityDate = term ? calcMaturityDate(renewalDate, term) : '';
   item.renewCount = (item.renewCount || 0) + 1;
   item.status = 'active';
   item.withdrawnAt = null;
