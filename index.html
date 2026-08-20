@@ -627,7 +627,14 @@ body {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">银行名称</label>
-          <input type="text" class="form-input" id="inputBank" placeholder="如：工商银行">
+          <select class="form-select" id="inputBank">
+            <option value="">请选择银行</option>
+            <option>农业银行</option>
+            <option>网商银行</option>
+            <option>建设银行</option>
+            <option>工商银行</option>
+            <option>江苏·农商行</option>
+          </select>
         </div>
         <div class="form-group">
           <label class="form-label">存入日期</label>
@@ -662,8 +669,6 @@ body {
         </div>
         <div class="term-chips">
           <div class="term-chip" onclick="setTerm('')">活期</div>
-          <div class="term-chip" onclick="setTerm(3)">3个月</div>
-          <div class="term-chip" onclick="setTerm(6)">6个月</div>
           <div class="term-chip" onclick="setTerm(12)">1年</div>
           <div class="term-chip" onclick="setTerm(24)">2年</div>
           <div class="term-chip" onclick="setTerm(36)">3年</div>
@@ -1088,12 +1093,11 @@ function depositDetailHtml(d) {
   var termText = d.term ? d.term + '月' : '活期';
   var maturityText = d.maturityDate ? d.maturityDate : '活期（随时可取）';
   var interestText = d.term ? '<span style="color:var(--success)">¥' + formatMoneyFull(interest) + '</span>' : '—';
-  var maturityAmountText = d.term ? '<span style="font-weight:700">¥' + formatMoneyFull(d.amount + interest) + '</span>' : '—';
   return '<div class="deposit-item-details">' +
+    '<div class="deposit-detail-item"><span class="deposit-detail-label">存入日期</span><span class="deposit-detail-value">' + (d.startDate || '—') + '</span></div>' +
+    '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日期</span><span class="deposit-detail-value">' + maturityText + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + rateText + ' / ' + termText + '</span></div>' +
-    '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日</span><span class="deposit-detail-value">' + maturityText + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value">' + interestText + '</span></div>' +
-    '<div class="deposit-detail-item"><span class="deposit-detail-label">到期总额</span><span class="deposit-detail-value">' + maturityAmountText + '</span></div>' +
   '</div>';
 }
 
@@ -1192,6 +1196,7 @@ function resetAddForm() {
   if (rh) { rh.classList.add('hidden'); }
   var rg = document.getElementById('renewToggleGroup');
   if (rg) { rg.classList.add('hidden'); }
+  currentDateLocked = false;
   document.getElementById('selYear').disabled = false;
   document.getElementById('selMonth').disabled = false;
   document.getElementById('selDay').disabled = false;
@@ -1229,7 +1234,19 @@ function openEditForm(id) {
   if (!d) return;
 
   document.getElementById('editId').value = d.id;
-  document.getElementById('inputBank').value = d.bank || '';
+  // 银行下拉：若老数据银行不在选项中，动态补一个选项避免丢数据
+  var bankSel = document.getElementById('inputBank');
+  var bankVal = d.bank || '';
+  var bankExists = false;
+  for (var bi = 0; bi < bankSel.options.length; bi++) {
+    if (bankSel.options[bi].value === bankVal) { bankExists = true; break; }
+  }
+  if (!bankExists && bankVal) {
+    var bankOpt = document.createElement('option');
+    bankOpt.value = bankVal; bankOpt.textContent = bankVal;
+    bankSel.appendChild(bankOpt);
+  }
+  bankSel.value = bankVal;
   document.getElementById('inputAmount').value = d.amount;
   document.getElementById('inputRate').value = d.rate == null ? '' : d.rate;
   document.getElementById('inputTerm').value = d.term == null ? '' : d.term;
@@ -1246,9 +1263,11 @@ function openEditForm(id) {
   document.getElementById('renewToggleGroup').classList.toggle('hidden', !canRenew);
   document.getElementById('renewToggle').checked = false;
   document.getElementById('renewHint').classList.add('hidden');
-  document.getElementById('selYear').disabled = false;
-  document.getElementById('selMonth').disabled = false;
-  document.getElementById('selDay').disabled = false;
+  // 续存过的记录：存入日期锁定不可改（保持初次存入日）；未续存过的可自由编辑
+  currentDateLocked = (d.renewCount || 0) > 0;
+  document.getElementById('selYear').disabled = currentDateLocked;
+  document.getElementById('selMonth').disabled = currentDateLocked;
+  document.getElementById('selDay').disabled = currentDateLocked;
 
   // Sync term chip active state
   document.querySelectorAll('.term-chip').forEach(function(c) {
@@ -1271,13 +1290,16 @@ function openEditForm(id) {
   document.getElementById('inputBank').focus();
 }
 
+// 当前编辑记录是否锁定存入日期（续存过的记录=true，不可改）
+var currentDateLocked = false;
+
 // 续存开关：勾选后锁定存入日期，标题切换为续存
 function toggleRenew() {
   var on = document.getElementById('renewToggle').checked;
   document.getElementById('renewHint').classList.toggle('hidden', !on);
-  document.getElementById('selYear').disabled = on;
-  document.getElementById('selMonth').disabled = on;
-  document.getElementById('selDay').disabled = on;
+  document.getElementById('selYear').disabled = on || currentDateLocked;
+  document.getElementById('selMonth').disabled = on || currentDateLocked;
+  document.getElementById('selDay').disabled = on || currentDateLocked;
   if (on) {
     document.getElementById('formTitle').textContent = '续存存款';
     document.getElementById('formSubmitText').textContent = '确认续存';
@@ -1305,6 +1327,7 @@ function submitDeposit() {
   var startDate = getStartDateStr();
   var note = document.getElementById('inputNote').value.trim();
 
+  if (!bank) { showToast('请选择银行'); return; }
   if (!amount || amount <= 0 || Math.floor(amount) !== amount) { showToast('请输入整数金额（元）'); return; }
   if (rate !== null && (isNaN(rate) || rate < 0)) { showToast('请输入有效的年利率'); return; }
   if (term !== null && (isNaN(term) || term <= 0)) { showToast('请输入有效的存款期限'); return; }
@@ -1331,9 +1354,14 @@ function submitDeposit() {
     item.bank = bank || '未填写银行';
     item.amount = amount;
     item.rate = rate;
+    // 日期或期限变更才重算到期日；否则保持原到期日（续存顺延的到期日不被拉回）
+    var dateChanged = startDate !== item.startDate;
+    var termChanged = term !== item.term;
     item.term = term;
     item.startDate = startDate;
-    item.maturityDate = maturityDate;
+    if (dateChanged || termChanged) {
+      item.maturityDate = term ? calcMaturityDate(startDate, term) : '';
+    }
     item.note = note;
     var newStatus = document.getElementById('editStatus').value;
     if (newStatus === 'withdrawn' && item.status !== 'withdrawn') {
@@ -1585,10 +1613,6 @@ function renderDepositCards(deposits) {
       html += depositRemainBadge(d);
       html += '</div>';
       html += depositDetailHtml(d);
-      html += '<div class="deposit-actions">';
-      html += '<button class="deposit-action-btn" onclick="openEditForm(' + d.id + ')">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</button>';
-      html += '</div>';
       html += '</div>';
     });
 
