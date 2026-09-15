@@ -220,6 +220,12 @@ body {
 }
 .btn-add:hover { background: var(--primary); color: white; border-style: solid; }
 .btn-add svg { width: 20px; height: 20px; }
+.add-btns { display: flex; gap: 10px; margin-bottom: 12px; }
+.add-btns .btn-add { flex: 1; margin-bottom: 0; }
+.btn-add-renew { background: var(--success-light, #e8f7ee); color: var(--success, #16a34a); border: 1px dashed var(--success, #16a34a); }
+.btn-add-renew:hover { background: var(--success, #16a34a); color: #fff; border-style: solid; }
+.cal-type-head { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 12px 0 6px; padding-left: 8px; border-left: 3px solid var(--primary); }
+.cal-type-head:first-child { margin-top: 0; }
 
 /* Deposit List */
 .deposit-list { display: flex; flex-direction: column; gap: 10px; }
@@ -616,10 +622,16 @@ body {
 
   <!-- List Tab -->
   <div id="listTab">
-    <button class="btn-add" id="addBtn" onclick="toggleAddForm()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      添加存款
-    </button>
+    <div class="add-btns">
+      <button class="btn-add" id="addBtn" onclick="openAddForm('add')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增存入
+      </button>
+      <button class="btn-add btn-add-renew" id="renewEntryBtn" onclick="openAddForm('renew')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        续存转入
+      </button>
+    </div>
 
     <div class="card add-form" id="addForm">
       <div class="section-title" style="margin-bottom: 16px;" id="formTitle">新增存款记录</div>
@@ -675,13 +687,7 @@ body {
           <div class="term-chip" onclick="setTerm(60)">5年</div>
         </div>
       </div>
-      <div class="form-group full hidden" id="renewToggleGroup">
-        <label class="renew-toggle">
-          <input type="checkbox" id="renewToggle" onchange="toggleRenew()">
-          <span>续存本期（日期改为续存日期，初次存入日不变）</span>
-        </label>
-        <div class="renew-hint hidden" id="renewHint">勾选后上方的日期即为「续存日期」，可修改；提交后初次存入日保持不变，到期日按续存日期和新期限重算</div>
-      </div>
+      <!-- 续存统一走新增入口「续存转入」，编辑内不再放续存开关 -->
       <div class="form-group full hidden" id="editStatusGroup">
         <label class="form-label">状态</label>
         <select class="form-select" id="editStatus">
@@ -698,7 +704,7 @@ body {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           <span id="formSubmitText">确认添加</span>
         </button>
-        <button class="btn btn-secondary" onclick="toggleAddForm()">取消</button>
+        <button class="btn btn-secondary" onclick="closeAddForm()">取消</button>
       </div>
     </div>
 
@@ -779,7 +785,12 @@ const EXPORT_KEY = 'wb_deposit_last_export';
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    var arr = raw ? JSON.parse(raw) : [];
+    // 老数据缺 type 字段，默认视为新增存入，避免消失
+    if (Array.isArray(arr)) {
+      arr.forEach(function(d) { if (d && !d.type) d.type = 'new'; });
+    }
+    return arr;
   } catch(e) { return []; }
 }
 
@@ -1014,6 +1025,7 @@ function loadSampleData() {
       id: generateId(),
       bank: '工商银行',
       amount: 60000,
+      type: 'renew',
       rate: 2.75,
       term: 12,
       startDate: '2024-06-15',
@@ -1082,8 +1094,8 @@ function depositRemainBadge(d) {
 
 // 续存期数徽章（未续存过不显示）
 function renewBadgeHtml(d) {
-  var n = d.renewCount || 0;
-  return n > 0 ? '<span class="badge renew">已续存' + n + '期</span>' : '';
+  if (d.type === 'renew') return '<span class="badge renew">续存</span>';
+  return '';
 }
 
 // 明细行（支持活期：利率/期限/利息/到期总额显示 —）
@@ -1094,7 +1106,7 @@ function depositDetailHtml(d) {
   var maturityText = d.maturityDate ? d.maturityDate : '活期（随时可取）';
   var interestText = d.term ? '<span style="color:var(--success)">¥' + formatMoneyFull(interest) + '</span>' : '—';
   return '<div class="deposit-item-details">' +
-    '<div class="deposit-detail-item"><span class="deposit-detail-label">存入日期</span><span class="deposit-detail-value">' + (d.startDate || '—') + '</span></div>' +
+    '<div class="deposit-detail-item"><span class="deposit-detail-label">' + (d.type === 'renew' ? '续存日期' : '存入日期') + '</span><span class="deposit-detail-value">' + (d.startDate || '—') + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日期</span><span class="deposit-detail-value">' + maturityText + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + rateText + ' / ' + termText + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value">' + interestText + '</span></div>' +
@@ -1188,15 +1200,10 @@ function renderList() {
 }
 
 // ========== Add Form ==========
+var formMode = 'add';
 function resetAddForm() {
   document.getElementById('editId').value = '';
-  var rt = document.getElementById('renewToggle');
-  if (rt) { rt.checked = false; }
-  var rh = document.getElementById('renewHint');
-  if (rh) { rh.classList.add('hidden'); }
-  var rg = document.getElementById('renewToggleGroup');
-  if (rg) { rg.classList.add('hidden'); }
-  currentDateLocked = false;
+  formMode = 'add';
   document.getElementById('startDateLabel').textContent = '存入日期';
   document.getElementById('selYear').disabled = false;
   document.getElementById('selMonth').disabled = false;
@@ -1214,19 +1221,30 @@ function resetAddForm() {
   document.getElementById('editStatusGroup').classList.add('hidden');
 }
 
-function toggleAddForm() {
+function closeAddForm() {
   var form = document.getElementById('addForm');
-  var btn = document.getElementById('addBtn');
-  if (form.classList.contains('show')) {
-    form.classList.remove('show');
-    btn.style.display = 'flex';
-    resetAddForm();
-  } else {
-    resetAddForm();
-    form.classList.add('show');
-    btn.style.display = 'none';
-    document.getElementById('inputBank').focus();
+  form.classList.remove('show');
+  document.getElementById('addBtn').style.display = 'flex';
+  var rb = document.getElementById('renewEntryBtn');
+  if (rb) rb.style.display = 'flex';
+  resetAddForm();
+}
+
+// 打开新增表单：mode='add' 新增存入，mode='renew' 续存转入
+function openAddForm(mode) {
+  resetAddForm();
+  formMode = mode || 'add';
+  if (formMode === 'renew') {
+    document.getElementById('formTitle').textContent = '新增续存存款';
+    document.getElementById('formSubmitText').textContent = '确认续存';
+    document.getElementById('startDateLabel').textContent = '续存日期';
   }
+  var form = document.getElementById('addForm');
+  form.classList.add('show');
+  document.getElementById('addBtn').style.display = 'none';
+  var rb = document.getElementById('renewEntryBtn');
+  if (rb) rb.style.display = 'none';
+  document.getElementById('inputBank').focus();
 }
 
 function openEditForm(id) {
@@ -1259,16 +1277,11 @@ function openEditForm(id) {
   document.getElementById('formSubmitText').textContent = '保存修改';
   document.getElementById('editStatusGroup').classList.remove('hidden');
 
-  // 续存开关：仅存期内的定期存款可续存；默认关闭
-  var canRenew = d.status === 'active' && d.term;
-  document.getElementById('renewToggleGroup').classList.toggle('hidden', !canRenew);
-  document.getElementById('renewToggle').checked = false;
-  document.getElementById('renewHint').classList.add('hidden');
-  // 续存过的记录：存入日期锁定不可改（保持初次存入日）；未续存过的可自由编辑
-  currentDateLocked = (d.renewCount || 0) > 0;
-  document.getElementById('selYear').disabled = currentDateLocked;
-  document.getElementById('selMonth').disabled = currentDateLocked;
-  document.getElementById('selDay').disabled = currentDateLocked;
+  // 编辑模式：formMode 复位为 add（编辑不新增记录）；日期可自由改
+  formMode = 'add';
+  document.getElementById('selYear').disabled = false;
+  document.getElementById('selMonth').disabled = false;
+  document.getElementById('selDay').disabled = false;
 
   // Sync term chip active state
   document.querySelectorAll('.term-chip').forEach(function(c) {
@@ -1282,49 +1295,17 @@ function openEditForm(id) {
   });
 
   var form = document.getElementById('addForm');
-  var btn = document.getElementById('addBtn');
+  document.getElementById('addBtn').style.display = 'none';
+  var rb = document.getElementById('renewEntryBtn');
+  if (rb) rb.style.display = 'none';
   form.classList.add('show');
-  btn.style.display = 'none';
 
   // Scroll to form
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.getElementById('inputBank').focus();
 }
 
-// 当前编辑记录是否锁定存入日期（续存过的记录=true，不可改）
-var currentDateLocked = false;
-
-// 续存开关：勾选后日期字段变为「续存日期」（可编辑，后台初次存入日不变），标题切换为续存
-function toggleRenew() {
-  var on = document.getElementById('renewToggle').checked;
-  document.getElementById('renewHint').classList.toggle('hidden', !on);
-  var label = document.getElementById('startDateLabel');
-  var sy = document.getElementById('selYear');
-  var sm = document.getElementById('selMonth');
-  var sd = document.getElementById('selDay');
-  // 当前编辑的记录（勾选时把日期切到续存日期，取消时切回存入日期）
-  var id = document.getElementById('editId').value;
-  var d = null;
-  if (id) {
-    var data = loadData();
-    d = data.find(function(x) { return x.id == id; });
-  }
-  if (on) {
-    // 续存模式：日期 = 续存日期，可编辑，默认当前到期日
-    label.textContent = '续存日期';
-    sy.disabled = false; sm.disabled = false; sd.disabled = false;
-    if (d) setStartDateStr(d.maturityDate || todayStr());
-    document.getElementById('formTitle').textContent = '续存存款';
-    document.getElementById('formSubmitText').textContent = '确认续存';
-  } else {
-    // 普通编辑：日期 = 存入日期；续存过的记录锁定（初次存入日不可改）
-    label.textContent = '存入日期';
-    sy.disabled = currentDateLocked; sm.disabled = currentDateLocked; sd.disabled = currentDateLocked;
-    if (d) setStartDateStr(d.startDate || todayStr());
-    document.getElementById('formTitle').textContent = '编辑存款记录';
-    document.getElementById('formSubmitText').textContent = '保存修改';
-  }
-}
+// 续存统一走新增入口「续存转入」，编辑内不再有续存开关
 
 function setTerm(months) {
   document.getElementById('inputTerm').value = months;
@@ -1358,20 +1339,9 @@ function submitDeposit() {
     var item = data.find(function(d) { return d.id == editId; });
     if (!item) { showToast('记录不存在'); return; }
 
-    // 续存：表单日期视为续存日期，后台存入日期(初次存入日)保持不变，到期日按续存日期+新期限重算
-    if (document.getElementById('renewToggle').checked) {
-      applyRenew(item, term, rate, startDate);
-      saveData(data);
-      toggleAddForm();
-      renderAll();
-      showToast('续存成功，存入日期保持 ' + item.startDate);
-      return;
-    }
-
     item.bank = bank || '未填写银行';
     item.amount = amount;
     item.rate = rate;
-    // 日期或期限变更才重算到期日；否则保持原到期日（续存顺延的到期日不被拉回）
     var dateChanged = startDate !== item.startDate;
     var termChanged = term !== item.term;
     item.term = term;
@@ -1389,13 +1359,14 @@ function submitDeposit() {
     item.status = newStatus;
     item.updatedAt = Date.now();
     saveData(data);
-    toggleAddForm();
+    closeAddForm();
     renderAll();
     showToast('存款记录已保存');
   } else {
-    // Add new
+    // Add new：按入口区分 新增存入 / 续存
     var deposit = {
       id: generateId(),
+      type: formMode === 'renew' ? 'renew' : 'new',
       bank: bank || '未填写银行',
       amount: amount,
       rate: rate,
@@ -1408,22 +1379,13 @@ function submitDeposit() {
     };
     data.push(deposit);
     saveData(data);
-    toggleAddForm();
+    closeAddForm();
     renderAll();
-    showToast('存款记录已添加');
+    showToast(formMode === 'renew' ? '续存记录已添加' : '存款记录已添加');
   }
 }
 
-// 续存：后台存入日期(startDate=初次存入日)保持不变，到期日从续存日期(renewalDate)按新期限计算
-function applyRenew(item, term, rate, renewalDate) {
-  item.term = term;
-  item.rate = rate;
-  item.maturityDate = term ? calcMaturityDate(renewalDate, term) : '';
-  item.renewCount = (item.renewCount || 0) + 1;
-  item.status = 'active';
-  item.withdrawnAt = null;
-  item.updatedAt = Date.now();
-}
+// 续存统一走新增入口「续存转入」新建独立记录（type='renew'），不再就地续存
 
 // ========== Actions ==========
 function confirmDelete(id) {
@@ -1556,10 +1518,19 @@ function renderCalendar() {
   gridEl.innerHTML = html;
 
   // 全年汇总
-  var yearAmount = yearDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
-  var summaryHtml = yearDeposits.length > 0
-    ? '本年' + actionLabel + '，本金 <span>¥' + formatMoney(yearAmount) + '</span>'
-    : '本年无' + actionLabel + '记录';
+  var summaryHtml;
+  if (calendarMode === 'deposit') {
+    var yearNew = yearDeposits.filter(function(d) { return d.type !== 'renew'; });
+    var yearRenew = yearDeposits.filter(function(d) { return d.type === 'renew'; });
+    var newAmt = yearNew.reduce(function(s, d) { return s + d.amount; }, 0);
+    var renewAmt = yearRenew.reduce(function(s, d) { return s + d.amount; }, 0);
+    summaryHtml = '本年原始存入 <span>¥' + formatMoney(newAmt) + '</span>（' + yearNew.length + '笔）　续存 <span>¥' + formatMoney(renewAmt) + '</span>（' + yearRenew.length + '笔）';
+  } else {
+    var yearAmount = yearDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
+    summaryHtml = yearDeposits.length > 0
+      ? '本年' + actionLabel + '，本金 <span>¥' + formatMoney(yearAmount) + '</span>'
+      : '本年无' + actionLabel + '记录';
+  }
   document.getElementById('calendarMonthSummary').innerHTML = summaryHtml;
 
   // 详情：选中月份看该月，未选中看全年
@@ -1582,6 +1553,16 @@ function renderCalendarDetail(deposits, month) {
   }
   if (deposits.length === 0) {
     content.innerHTML = '<div class="calendar-detail-empty">' + (month !== null ? '这个月没有存款记录' : '今年没有存款记录') + '</div>';
+    return;
+  }
+  // 存入视图按类型分组（原始存入 / 续存），到期视图不分组
+  if (calendarMode === 'deposit') {
+    var newList = deposits.filter(function(d) { return d.type !== 'renew'; });
+    var renewList = deposits.filter(function(d) { return d.type === 'renew'; });
+    var html = '';
+    if (newList.length) html += '<div class="cal-type-head">原始存入</div>' + renderDepositCards(newList);
+    if (renewList.length) html += '<div class="cal-type-head">续存</div>' + renderDepositCards(renewList);
+    content.innerHTML = html;
   } else {
     content.innerHTML = renderDepositCards(deposits);
   }
@@ -1659,7 +1640,7 @@ function exportData() {
 function exportCSV() {
   var data = loadData().filter(function(d) { return !d.sample; });
   if (data.length === 0) { showToast('没有数据可导出'); return; }
-  var csv = '\uFEFF银行,金额(元),年利率(%),期限,存入日期,到期日期,预估利息(元),到期总额(元),状态,备注\n';
+  var csv = '\uFEFF银行,类型,金额(元),年利率(%),期限,存入日期,到期日期,预估利息(元),到期总额(元),状态,备注\n';
   data.forEach(function(d) {
     var interest = calcInterest(d.amount, d.rate, d.term);
     var rateTxt = d.rate == null ? '' : d.rate;
@@ -1667,7 +1648,8 @@ function exportCSV() {
     var maturityTxt = d.maturityDate || '活期';
     var interestTxt = d.term ? Math.round(interest) : '';
     var maturityAmountTxt = d.term ? Math.round(d.amount + interest) : '';
-    csv += (d.bank || '') + ',' + d.amount + ',' + rateTxt + ',' + termTxt + ',' + d.startDate + ',' + maturityTxt + ',' + interestTxt + ',' + maturityAmountTxt + ',' + (d.status === 'active' ? '存入中' : '已提取') + ',' + (d.note || '') + '\n';
+    var typeTxt = d.type === 'renew' ? '续存' : '新增存入';
+    csv += (d.bank || '') + ',' + typeTxt + ',' + d.amount + ',' + rateTxt + ',' + termTxt + ',' + d.startDate + ',' + maturityTxt + ',' + interestTxt + ',' + maturityAmountTxt + ',' + (d.status === 'active' ? '存入中' : '已提取') + ',' + (d.note || '') + '\n';
   });
   var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   var url = URL.createObjectURL(blob);
