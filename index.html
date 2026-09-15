@@ -271,8 +271,6 @@ body {
 .deposit-action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
 .deposit-action-btn.success { border-color: var(--success); color: var(--success); }
 .deposit-action-btn.success:hover { background: var(--success); color: white; }
-.deposit-action-btn.renew { border-color: var(--primary); color: var(--primary); }
-.deposit-action-btn.renew:hover { background: var(--primary); color: white; }
 .deposit-action-btn.renew { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 .deposit-action-btn.renew:hover { background: var(--primary); color: white; }
 .renew-hint { font-size: 12px; color: var(--primary); background: var(--primary-light); border-radius: 6px; padding: 8px 10px; margin-bottom: 12px; line-height: 1.5; }
@@ -441,7 +439,6 @@ body {
   font-family: inherit;
 }
 .view-toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-.deposit-subtabs { margin-top: -4px; }
 
 /* Year View */
 .calendar-grid.year-mode { grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -723,10 +720,6 @@ body {
       <div class="view-toggle">
         <button class="view-toggle-btn" id="btnDepositView" onclick="setCalMode('deposit')">存入</button>
         <button class="view-toggle-btn active" id="btnMaturityView" onclick="setCalMode('maturity')">到期</button>
-      </div>
-      <div class="view-toggle deposit-subtabs hidden" id="depositSubTabs">
-        <button class="view-toggle-btn active" id="btnNewView" onclick="setDepositSub('new')">本年存入</button>
-        <button class="view-toggle-btn" id="btnRenewView" onclick="setDepositSub('renew')">续存</button>
       </div>
       <div class="calendar-month-summary" id="calendarMonthSummary"></div>
       <div class="calendar-grid year-mode" id="calendarGrid"></div>
@@ -1025,7 +1018,6 @@ function loadSampleData() {
       term: 12,
       startDate: '2024-06-15',
       renewCount: 2,
-      renewDate: '2026-06-15',
       maturityDate: '2027-06-15',
       note: '2024-06 存入，已续存 2 期',
       status: 'active',
@@ -1182,11 +1174,6 @@ function renderList() {
       html += '<button class="deposit-action-btn" onclick="openEditForm(' + d.id + ')">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
         '编辑</button>';
-      if (d.status === 'active' && d.term) {
-        html += '<button class="deposit-action-btn renew" onclick="openRenew(' + d.id + ')">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
-          '续存</button>';
-      }
       html += '<button class="deposit-action-btn danger" onclick="confirmDelete(' + d.id + ')">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
         '删除</button>';
@@ -1302,17 +1289,6 @@ function openEditForm(id) {
   // Scroll to form
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.getElementById('inputBank').focus();
-}
-
-// 直达续存：打开编辑表单并预勾「续存本期」（仅存期内的定期存款可续存）
-function openRenew(id) {
-  openEditForm(id);
-  var rt = document.getElementById('renewToggle');
-  var rg = document.getElementById('renewToggleGroup');
-  if (rt && rg && !rg.classList.contains('hidden')) {
-    rt.checked = true;
-    toggleRenew();
-  }
 }
 
 // 当前编辑记录是否锁定存入日期（续存过的记录=true，不可改）
@@ -1444,7 +1420,6 @@ function applyRenew(item, term, rate, renewalDate) {
   item.rate = rate;
   item.maturityDate = term ? calcMaturityDate(renewalDate, term) : '';
   item.renewCount = (item.renewCount || 0) + 1;
-  item.renewDate = renewalDate;
   item.status = 'active';
   item.withdrawnAt = null;
   item.updatedAt = Date.now();
@@ -1502,7 +1477,6 @@ function switchTab(tab) {
 
 // ========== Calendar ==========
 var calYear, selectedMonth = null, calendarMode = 'maturity';
-var depositSubMode = 'new'; // 存入视图子模式：new=本年存入 / renew=续存
 
 function initCalendar() {
   calYear = new Date().getFullYear();
@@ -1514,22 +1488,6 @@ function setCalMode(mode) {
   selectedMonth = null;
   document.getElementById('btnMaturityView').classList.toggle('active', mode === 'maturity');
   document.getElementById('btnDepositView').classList.toggle('active', mode === 'deposit');
-  var sub = document.getElementById('depositSubTabs');
-  if (sub) {
-    sub.classList.toggle('hidden', mode !== 'deposit');
-    if (mode === 'deposit') {
-      document.getElementById('btnNewView').classList.toggle('active', depositSubMode === 'new');
-      document.getElementById('btnRenewView').classList.toggle('active', depositSubMode === 'renew');
-    }
-  }
-  renderCalendar();
-}
-
-function setDepositSub(mode) {
-  depositSubMode = mode;
-  selectedMonth = null;
-  document.getElementById('btnNewView').classList.toggle('active', mode === 'new');
-  document.getElementById('btnRenewView').classList.toggle('active', mode === 'renew');
   renderCalendar();
 }
 
@@ -1564,27 +1522,21 @@ function renderCalendar() {
   var titleEl = document.getElementById('calendarTitle');
   var gridEl = document.getElementById('calendarGrid');
   var today = new Date();
-  var dateField, actionLabel;
-  var all = loadData();
-  if (calendarMode === 'maturity') {
-    all = all.filter(function(d) { return d.status === 'active'; });
-    dateField = 'maturityDate';
-    actionLabel = '到期';
-  } else if (depositSubMode === 'new') {
-    // 本年存入：初次存入日(startDate)在本年（已提取仍计入，视为当期投入）
-    dateField = 'startDate';
-    actionLabel = '存入';
-    all = all.filter(function(d) { return d.startDate && d.startDate.indexOf(calYear + '-') === 0; });
-  } else {
-    // 续存：续存日期(renewDate)在本年
-    dateField = 'renewDate';
-    actionLabel = '续存';
-    all = all.filter(function(d) { return (d.renewCount || 0) > 0 && d.renewDate && d.renewDate.indexOf(calYear + '-') === 0; });
-  }
+  var dateField = calendarMode === 'deposit' ? 'startDate' : 'maturityDate';
+  var actionLabel = calendarMode === 'deposit' ? '存入' : '到期';
 
   titleEl.textContent = calYear + '年';
 
-  var yearDeposits = all.slice().sort(function(a, b) { return (a[dateField] || '') < (b[dateField] || '') ? -1 : 1; });
+  var all = loadData();
+  if (calendarMode === 'maturity') {
+    all = all.filter(function(d) { return d.status === 'active'; });
+  }
+
+  var yearStart = calYear + '-01-01';
+  var yearEnd = calYear + '-12-31';
+  var yearDeposits = all.filter(function(d) {
+    return d[dateField] && d[dateField] >= yearStart && d[dateField] <= yearEnd;
+  }).sort(function(a, b) { return a[dateField] < b[dateField] ? -1 : 1; });
 
   // 12 宫格
   var html = '';
@@ -1620,7 +1572,7 @@ function renderCalendar() {
 function renderCalendarDetail(deposits, month) {
   var title = document.getElementById('calendarDetailTitle');
   var content = document.getElementById('calendarDetailContent');
-  var actionLabel = calendarMode === 'maturity' ? '到期' : (depositSubMode === 'renew' ? '续存' : '存入');
+  var actionLabel = calendarMode === 'deposit' ? '存入' : '到期';
   var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
   if (month !== null) {
