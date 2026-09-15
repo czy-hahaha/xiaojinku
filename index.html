@@ -220,10 +220,7 @@ body {
 }
 .btn-add:hover { background: var(--primary); color: white; border-style: solid; }
 .btn-add svg { width: 20px; height: 20px; }
-.add-btns { display: flex; gap: 10px; margin-bottom: 12px; }
-.add-btns .btn-add { flex: 1; margin-bottom: 0; }
-.btn-add-renew { background: var(--success-light, #e8f7ee); color: var(--success, #16a34a); border: 1px dashed var(--success, #16a34a); }
-.btn-add-renew:hover { background: var(--success, #16a34a); color: #fff; border-style: solid; }
+/* 续存已合并进「新增存入」表单内的勾选，不再单独按钮 */
 .cal-type-head { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 12px 0 6px; padding-left: 8px; border-left: 3px solid var(--primary); }
 .cal-type-head:first-child { margin-top: 0; }
 
@@ -622,16 +619,10 @@ body {
 
   <!-- List Tab -->
   <div id="listTab">
-    <div class="add-btns">
-      <button class="btn-add" id="addBtn" onclick="openAddForm('add')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        新增存入
-      </button>
-      <button class="btn-add btn-add-renew" id="renewEntryBtn" onclick="openAddForm('renew')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        续存转入
-      </button>
-    </div>
+    <button class="btn-add" id="addBtn" onclick="openAddForm()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      新增存入
+    </button>
 
     <div class="card add-form" id="addForm">
       <div class="section-title" style="margin-bottom: 16px;" id="formTitle">新增存款记录</div>
@@ -656,6 +647,10 @@ body {
             <select class="form-select date-sel" id="selDay"></select>
           </div>
         </div>
+        <label class="renew-toggle" for="inputRenew">
+          <input type="checkbox" id="inputRenew" onchange="toggleRenewMode(this.checked)">
+          <span>这是一笔续存（勾选后，日期记为续存日期，并归入「续存」统计）</span>
+        </label>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -687,7 +682,6 @@ body {
           <div class="term-chip" onclick="setTerm(60)">5年</div>
         </div>
       </div>
-      <!-- 续存统一走新增入口「续存转入」，编辑内不再放续存开关 -->
       <div class="form-group full hidden" id="editStatusGroup">
         <label class="form-label">状态</label>
         <select class="form-select" id="editStatus">
@@ -1200,10 +1194,9 @@ function renderList() {
 }
 
 // ========== Add Form ==========
-var formMode = 'add';
 function resetAddForm() {
   document.getElementById('editId').value = '';
-  formMode = 'add';
+  document.getElementById('inputRenew').checked = false;
   document.getElementById('startDateLabel').textContent = '存入日期';
   document.getElementById('selYear').disabled = false;
   document.getElementById('selMonth').disabled = false;
@@ -1225,25 +1218,15 @@ function closeAddForm() {
   var form = document.getElementById('addForm');
   form.classList.remove('show');
   document.getElementById('addBtn').style.display = 'flex';
-  var rb = document.getElementById('renewEntryBtn');
-  if (rb) rb.style.display = 'flex';
   resetAddForm();
 }
 
-// 打开新增表单：mode='add' 新增存入，mode='renew' 续存转入
-function openAddForm(mode) {
+// 打开新增表单：是否续存由表单内「是否续存」勾选决定
+function openAddForm() {
   resetAddForm();
-  formMode = mode || 'add';
-  if (formMode === 'renew') {
-    document.getElementById('formTitle').textContent = '新增续存存款';
-    document.getElementById('formSubmitText').textContent = '确认续存';
-    document.getElementById('startDateLabel').textContent = '续存日期';
-  }
   var form = document.getElementById('addForm');
   form.classList.add('show');
   document.getElementById('addBtn').style.display = 'none';
-  var rb = document.getElementById('renewEntryBtn');
-  if (rb) rb.style.display = 'none';
   document.getElementById('inputBank').focus();
 }
 
@@ -1273,12 +1256,15 @@ function openEditForm(id) {
   document.getElementById('inputNote').value = d.note || '';
   document.getElementById('editStatus').value = d.status || 'active';
 
+  var isRenew = d.type === 'renew';
+  document.getElementById('inputRenew').checked = isRenew;
+  document.getElementById('startDateLabel').textContent = isRenew ? '续存日期' : '存入日期';
+
   document.getElementById('formTitle').textContent = '编辑存款记录';
   document.getElementById('formSubmitText').textContent = '保存修改';
   document.getElementById('editStatusGroup').classList.remove('hidden');
 
-  // 编辑模式：formMode 复位为 add（编辑不新增记录）；日期可自由改
-  formMode = 'add';
+  // 编辑模式：不新增记录，日期可自由改
   document.getElementById('selYear').disabled = false;
   document.getElementById('selMonth').disabled = false;
   document.getElementById('selDay').disabled = false;
@@ -1296,8 +1282,6 @@ function openEditForm(id) {
 
   var form = document.getElementById('addForm');
   document.getElementById('addBtn').style.display = 'none';
-  var rb = document.getElementById('renewEntryBtn');
-  if (rb) rb.style.display = 'none';
   form.classList.add('show');
 
   // Scroll to form
@@ -1305,12 +1289,19 @@ function openEditForm(id) {
   document.getElementById('inputBank').focus();
 }
 
-// 续存统一走新增入口「续存转入」，编辑内不再有续存开关
+// 续存由新增表单内「是否续存」勾选决定
 
 function setTerm(months) {
   document.getElementById('inputTerm').value = months;
   document.querySelectorAll('.term-chip').forEach(function(c) { c.classList.remove('active'); });
   event.target.classList.add('active');
+}
+
+// 勾选「是否续存」时切换表单文案与日期标签
+function toggleRenewMode(checked) {
+  document.getElementById('startDateLabel').textContent = checked ? '续存日期' : '存入日期';
+  document.getElementById('formTitle').textContent = checked ? '新增续存存款' : '新增存款记录';
+  document.getElementById('formSubmitText').textContent = checked ? '确认续存' : '确认添加';
 }
 
 function submitDeposit() {
@@ -1366,7 +1357,7 @@ function submitDeposit() {
     // Add new：按入口区分 新增存入 / 续存
     var deposit = {
       id: generateId(),
-      type: formMode === 'renew' ? 'renew' : 'new',
+      type: document.getElementById('inputRenew').checked ? 'renew' : 'new',
       bank: bank || '未填写银行',
       amount: amount,
       rate: rate,
@@ -1381,11 +1372,9 @@ function submitDeposit() {
     saveData(data);
     closeAddForm();
     renderAll();
-    showToast(formMode === 'renew' ? '续存记录已添加' : '存款记录已添加');
+    showToast(document.getElementById('inputRenew').checked ? '续存记录已添加' : '存款记录已添加');
   }
 }
-
-// 续存统一走新增入口「续存转入」新建独立记录（type='renew'），不再就地续存
 
 // ========== Actions ==========
 function confirmDelete(id) {
