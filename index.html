@@ -277,8 +277,24 @@ body {
 .deposit-action-btn.renew { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 .deposit-action-btn.renew:hover { background: var(--primary); color: white; }
 .renew-hint { font-size: 12px; color: var(--primary); background: var(--primary-light); border-radius: 6px; padding: 8px 10px; margin-bottom: 12px; line-height: 1.5; }
-.renew-toggle { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--primary); font-weight: 600; cursor: pointer; padding: 10px 0; user-select: none; }
-.renew-toggle input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+.bank-renew-row { display: flex; align-items: center; gap: 10px; }
+.bank-renew-row .form-select { flex: 1; min-width: 0; }
+.renew-box {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 60px; height: 44px; padding: 0 14px; flex-shrink: 0;
+  border: 2px solid var(--border, #d0d5dd); border-radius: 10px;
+  background: #fff; color: var(--text-tertiary, #98a2b3);
+  font-size: 14px; font-weight: 600; cursor: pointer; user-select: none;
+  transition: all .15s ease;
+}
+.renew-box input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+.renew-box:hover { border-color: var(--success, #16a34a); }
+.renew-box.active {
+  border-color: var(--success, #16a34a);
+  background: var(--success, #16a34a);
+  color: #fff;
+}
 .deposit-note { font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 6px 10px; background: var(--bg); border-radius: 6px; }
 
 /* Bank Group */
@@ -630,14 +646,20 @@ body {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">银行名称</label>
-          <select class="form-select" id="inputBank">
-            <option value="">请选择银行</option>
-            <option>农业银行</option>
-            <option>网商银行</option>
-            <option>建设银行</option>
-            <option>工商银行</option>
-            <option>江苏·农商行</option>
-          </select>
+          <div class="bank-renew-row">
+            <select class="form-select" id="inputBank">
+              <option value="">请选择银行</option>
+              <option>农业银行</option>
+              <option>网商银行</option>
+              <option>建设银行</option>
+              <option>工商银行</option>
+              <option>江苏·农商行</option>
+            </select>
+            <label class="renew-box" id="renewBox" for="inputRenew" title="勾选表示这是一笔续存">
+              <input type="checkbox" id="inputRenew" onchange="toggleRenewMode(this.checked)">
+              <span>续存</span>
+            </label>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label" id="startDateLabel">存入日期</label>
@@ -647,10 +669,6 @@ body {
             <select class="form-select date-sel" id="selDay"></select>
           </div>
         </div>
-        <label class="renew-toggle" for="inputRenew">
-          <input type="checkbox" id="inputRenew" onchange="toggleRenewMode(this.checked)">
-          <span>这是一笔续存（勾选后，日期记为续存日期，并归入「续存」统计）</span>
-        </label>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1197,6 +1215,7 @@ function renderList() {
 function resetAddForm() {
   document.getElementById('editId').value = '';
   document.getElementById('inputRenew').checked = false;
+  document.getElementById('renewBox').classList.remove('active');
   document.getElementById('startDateLabel').textContent = '存入日期';
   document.getElementById('selYear').disabled = false;
   document.getElementById('selMonth').disabled = false;
@@ -1258,6 +1277,7 @@ function openEditForm(id) {
 
   var isRenew = d.type === 'renew';
   document.getElementById('inputRenew').checked = isRenew;
+  document.getElementById('renewBox').classList.toggle('active', isRenew);
   document.getElementById('startDateLabel').textContent = isRenew ? '续存日期' : '存入日期';
 
   document.getElementById('formTitle').textContent = '编辑存款记录';
@@ -1302,6 +1322,7 @@ function toggleRenewMode(checked) {
   document.getElementById('startDateLabel').textContent = checked ? '续存日期' : '存入日期';
   document.getElementById('formTitle').textContent = checked ? '新增续存存款' : '新增存款记录';
   document.getElementById('formSubmitText').textContent = checked ? '确认续存' : '确认添加';
+  document.getElementById('renewBox').classList.toggle('active', checked);
 }
 
 function submitDeposit() {
