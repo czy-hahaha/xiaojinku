@@ -256,7 +256,7 @@ body {
 .deposit-detail-item { display: flex; flex-direction: column; }
 .deposit-detail-label { color: var(--text-tertiary); font-size: 11px; }
 .deposit-detail-value { color: var(--text-primary); font-weight: 500; }
-.deposit-actions { display: flex; gap: 8px; margin-top: 12px; }
+.deposit-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
 .deposit-action-btn {
   padding: 6px 14px;
   border: 1px solid var(--border);
@@ -266,7 +266,7 @@ body {
   background: white;
   color: var(--text-secondary);
   transition: all 0.2s;
-  min-height: 36px;
+  min-height: 44px;
   display: flex; align-items: center; gap: 4px;
 }
 .deposit-action-btn svg { width: 14px; height: 14px; }
@@ -699,13 +699,6 @@ body {
           <div class="term-chip" onclick="setTerm(36)">3年</div>
           <div class="term-chip" onclick="setTerm(60)">5年</div>
         </div>
-      </div>
-      <div class="form-group full hidden" id="editStatusGroup">
-        <label class="form-label">状态</label>
-        <select class="form-select" id="editStatus">
-          <option value="active">存入中</option>
-          <option value="withdrawn">已提取</option>
-        </select>
       </div>
       <div class="form-group full">
         <label class="form-label">备注（可选）</label>
@@ -1201,6 +1194,12 @@ function renderList() {
       html += '<button class="deposit-action-btn danger" onclick="confirmDelete(' + d.id + ')">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
         '删除</button>';
+      var wdCls = d.status === 'withdrawn' ? 'success' : '';
+      var wdTxt = d.status === 'withdrawn' ? '已提取' : '提取';
+      var wdIcon = d.status === 'withdrawn'
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
+      html += '<button class="deposit-action-btn ' + wdCls + '" onclick="toggleWithdraw(' + d.id + ')">' + wdIcon + wdTxt + '</button>';
       html += '</div>';
       html += '</div>';
     });
@@ -1226,11 +1225,9 @@ function resetAddForm() {
   document.getElementById('inputTerm').value = '';
   document.getElementById('inputNote').value = '';
   setStartDateStr(todayStr());
-  document.getElementById('editStatus').value = 'active';
   document.querySelectorAll('.term-chip').forEach(function(c) { c.classList.remove('active'); });
   document.getElementById('formTitle').textContent = '新增存款记录';
   document.getElementById('formSubmitText').textContent = '确认添加';
-  document.getElementById('editStatusGroup').classList.add('hidden');
 }
 
 function closeAddForm() {
@@ -1273,8 +1270,6 @@ function openEditForm(id) {
   document.getElementById('inputTerm').value = d.term == null ? '' : d.term;
   setStartDateStr(d.startDate);
   document.getElementById('inputNote').value = d.note || '';
-  document.getElementById('editStatus').value = d.status || 'active';
-
   var isRenew = d.type === 'renew';
   document.getElementById('inputRenew').checked = isRenew;
   document.getElementById('renewBox').classList.toggle('active', isRenew);
@@ -1282,7 +1277,6 @@ function openEditForm(id) {
 
   document.getElementById('formTitle').textContent = '编辑存款记录';
   document.getElementById('formSubmitText').textContent = '保存修改';
-  document.getElementById('editStatusGroup').classList.remove('hidden');
 
   // 编辑模式：不新增记录，日期可自由改
   document.getElementById('selYear').disabled = false;
@@ -1362,13 +1356,6 @@ function submitDeposit() {
       item.maturityDate = term ? calcMaturityDate(startDate, term) : '';
     }
     item.note = note;
-    var newStatus = document.getElementById('editStatus').value;
-    if (newStatus === 'withdrawn' && item.status !== 'withdrawn') {
-      item.withdrawnAt = Date.now();
-    } else if (newStatus === 'active' && item.status === 'withdrawn') {
-      item.withdrawnAt = null;
-    }
-    item.status = newStatus;
     item.updatedAt = Date.now();
     saveData(data);
     closeAddForm();
@@ -1398,6 +1385,21 @@ function submitDeposit() {
 }
 
 // ========== Actions ==========
+function toggleWithdraw(id) {
+  var data = loadData();
+  var item = data.find(function(d) { return d.id == id; });
+  if (!item) return;
+  if (item.status === 'withdrawn') {
+    item.status = 'active';
+    item.withdrawnAt = null;
+  } else {
+    item.status = 'withdrawn';
+    item.withdrawnAt = Date.now();
+  }
+  saveData(data);
+  renderAll();
+}
+
 function confirmDelete(id) {
   showConfirm('删除记录', '确定要删除这笔存款记录吗？此操作不可撤销。', function() {
     var data = loadData();
