@@ -221,8 +221,6 @@ body {
 .btn-add:hover { background: var(--primary); color: white; border-style: solid; }
 .btn-add svg { width: 20px; height: 20px; }
 /* 续存已合并进「新增存入」表单内的勾选，不再单独按钮 */
-.cal-type-head { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 12px 0 6px; padding-left: 8px; border-left: 3px solid var(--primary); }
-.cal-type-head:first-child { margin-top: 0; }
 
 /* Deposit List */
 .deposit-list { display: flex; flex-direction: column; gap: 10px; }
@@ -1600,17 +1598,8 @@ function renderCalendarDetail(deposits, month) {
     content.innerHTML = '<div class="calendar-detail-empty">' + (month !== null ? '这个月没有存款记录' : '今年没有存款记录') + '</div>';
     return;
   }
-  // 存入视图按类型分组（原始存入 / 续存），到期视图不分组
-  if (calendarMode === 'deposit') {
-    var newList = deposits.filter(function(d) { return d.type !== 'renew'; });
-    var renewList = deposits.filter(function(d) { return d.type === 'renew'; });
-    var html = '';
-    if (newList.length) html += '<div class="cal-type-head">原始存入</div>' + renderDepositCards(newList);
-    if (renewList.length) html += '<div class="cal-type-head">续存</div>' + renderDepositCards(renewList);
-    content.innerHTML = html;
-  } else {
-    content.innerHTML = renderDepositCards(deposits);
-  }
+  // 统一按银行分组展示；原始存入 / 续存 由卡片上的「续存」徽章区分，不再单独分层
+  content.innerHTML = renderDepositCards(deposits);
 }
 
 function renderDepositCards(deposits) {
