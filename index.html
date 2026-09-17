@@ -254,7 +254,7 @@ body {
 .deposit-detail-item { display: flex; flex-direction: column; }
 .deposit-detail-label { color: var(--text-tertiary); font-size: 11px; }
 .deposit-detail-value { color: var(--text-primary); font-weight: 500; }
-.deposit-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: space-between; align-items: center; }
+.deposit-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; align-items: center; }
 .deposit-action-btn {
   padding: 6px 14px;
   border: 1px solid var(--border);
@@ -364,6 +364,11 @@ body {
 .deposit-item.overdue { border-left-color: var(--danger); }
 .deposit-item.soon { border-left-color: var(--warning); }
 .deposit-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.amount-group { display: flex; align-items: baseline; gap: 6px; }
+.type-tag.renew { font-size: 13px; font-weight: 500; color: var(--primary); }
+.status-text { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.status-text.danger { color: var(--danger); }
+.status-text.muted { color: var(--text-tertiary); }
 .deposit-item-amount { font-size: 20px; font-weight: 700; color: var(--text-primary); }
 .deposit-item-amount .currency { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
 .deposit-item-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 12px; }
@@ -1102,20 +1107,16 @@ function renderSummary() {
 // 剩余期限/状态徽章（支持活期）
 function depositRemainBadge(d) {
   var today = todayStr();
-  if (d.status === 'withdrawn') return '<span class="badge withdrawn">已提取</span>';
-  if (!d.maturityDate) return '<span class="badge active">活期</span>';
+  if (d.status === 'withdrawn') return '<span class="status-text muted">已提取</span>';
+  if (!d.maturityDate) return '<span class="status-text">活期</span>';
   var remDays = daysBetween(today, d.maturityDate);
-  if (remDays < 0) return '<span class="badge overdue">已逾期' + Math.abs(remDays) + '天</span>';
-  if (remDays === 0) return '<span class="badge active">今天到期</span>';
-  if (remDays >= 30) return '<span class="badge active">剩' + Math.floor(remDays / 30) + '个月</span>';
-  return '<span class="badge active">剩' + remDays + '天</span>';
+  if (remDays < 0) return '<span class="status-text danger">已逾期' + Math.abs(remDays) + '天</span>';
+  if (remDays === 0) return '<span class="status-text">今天到期</span>';
+  if (remDays >= 30) return '<span class="status-text">剩' + Math.floor(remDays / 30) + '个月</span>';
+  return '<span class="status-text">剩' + remDays + '天</span>';
 }
 
-// 续存期数徽章（未续存过不显示）
-function renewBadgeHtml(d) {
-  if (d.type === 'renew') return '<span class="badge renew">续存</span>';
-  return '';
-}
+// 续存标签已合并到金额前（.type-tag.renew），不再单独成徽章
 
 // 明细行（支持活期：利率/期限/利息/到期总额显示 —）
 function depositDetailHtml(d) {
@@ -1191,8 +1192,10 @@ function renderList() {
 
       html += '<div class="' + itemClass + '">';
       html += '<div class="deposit-item-top">';
+      html += '<div class="amount-group">';
       html += '<div class="deposit-item-amount"><span class="currency">¥</span>' + formatMoneyFull(d.amount) + '</div>';
-      html += renewBadgeHtml(d);
+      if (d.type === 'renew') html += '<span class="type-tag renew">续存</span>';
+      html += '</div>';
       html += depositRemainBadge(d);
       html += '</div>';
       html += depositDetailHtml(d);
@@ -1658,8 +1661,10 @@ function renderDepositCards(deposits) {
 
       html += '<div class="' + itemClass + '">';
       html += '<div class="deposit-item-top">';
+      html += '<div class="amount-group">';
       html += '<div class="deposit-item-amount"><span class="currency">¥</span>' + formatMoneyFull(d.amount) + '</div>';
-      html += renewBadgeHtml(d);
+      if (d.type === 'renew') html += '<span class="type-tag renew">续存</span>';
+      html += '</div>';
       html += depositRemainBadge(d);
       html += '</div>';
       html += depositDetailHtml(d);
