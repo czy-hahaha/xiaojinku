@@ -254,7 +254,8 @@ body {
 .deposit-detail-item { display: flex; flex-direction: column; }
 .deposit-detail-label { color: var(--text-tertiary); font-size: 11px; }
 .deposit-detail-value { color: var(--text-primary); font-weight: 500; }
-.deposit-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; align-items: center; }
+/* 卡片右上角：剩X月 + ⋯ 一组（替代原卡底按钮行） */
+.top-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .deposit-action-btn {
   padding: 6px 14px;
   border: 1px solid var(--border);
@@ -282,10 +283,13 @@ body {
 .action-menu-list.show { display: block; }
 .action-menu-item { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 10px 12px; border-radius: 6px; font-size: 14px; color: var(--text-secondary); cursor: pointer; min-height: 44px; }
 .action-menu-item:hover { background: var(--bg-secondary, #f5f7fa); color: var(--primary); }
+.action-menu-item.extract { color: var(--success); font-weight: 600; }
+.action-menu-item.extract:hover { background: var(--success-light, #f6ffed); color: var(--success); }
+.action-menu-item.disabled { color: var(--text-tertiary); font-weight: 500; cursor: default; }
+.action-menu-item.disabled:hover { background: transparent; color: var(--text-tertiary); }
 .action-menu-item.danger { color: var(--danger); }
 .action-menu-item.danger:hover { background: #fef2f2; color: var(--danger); }
-/* 已提取卡片操作区进一步弱化 */
-.deposit-item.withdrawn .deposit-actions { opacity: 0.55; }
+/* 已提取卡片整卡变灰（含右上 ⋯），弱化由 .deposit-item.withdrawn 统一处理 */
 .renew-hint { font-size: 12px; color: var(--primary); background: var(--primary-light); border-radius: 6px; padding: 8px 10px; margin-bottom: 12px; line-height: 1.5; }
 .bank-renew-row { display: flex; align-items: center; gap: 10px; }
 .bank-renew-row .form-select { flex: 1; min-width: 0; }
@@ -344,11 +348,13 @@ body {
 }
 .bank-group-items > .bank-group-inner {
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+/* 折叠时再裁切（保留折叠动画）；展开时允许 ⋯ 下拉菜单溢出不被切掉 */
+.bank-group.collapsed .bank-group-inner { overflow: hidden; }
 .bank-group.collapsed .bank-group-items {
   grid-template-rows: 0fr;
 }
@@ -1196,7 +1202,20 @@ function renderList() {
       html += '<div class="deposit-item-amount"><span class="currency">¥</span>' + formatMoneyFull(d.amount) + '</div>';
       if (d.type === 'renew') html += '<span class="type-tag renew">续存</span>';
       html += '</div>';
+      html += '<div class="top-right">';
       html += depositRemainBadge(d);
+      var dotsSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+      var wdMenuTxt = d.status === 'withdrawn' ? '已提取 / 恢复' : '提取';
+      var wdMenuCls = d.status === 'withdrawn' ? 'extract disabled' : 'extract';
+      html += '<div class="action-menu">';
+      html += '<button class="deposit-action-btn action-more" aria-label="更多操作" onclick="toggleActionMenu(event, ' + d.id + ')">' + dotsSvg + '</button>';
+      html += '<div class="action-menu-list" id="menu-' + d.id + '">' +
+        '<button class="action-menu-item ' + wdMenuCls + '" onclick="toggleWithdraw(' + d.id + ')">' + wdMenuTxt + '</button>' +
+        '<button class="action-menu-item" onclick="openEditForm(' + d.id + ')">编辑</button>' +
+        '<button class="action-menu-item danger" onclick="confirmDelete(' + d.id + ')">删除</button>' +
+        '</div>';
+      html += '</div>';
+      html += '</div>';
       html += '</div>';
       html += depositDetailHtml(d);
 
@@ -1204,22 +1223,6 @@ function renderList() {
         html += '<div class="deposit-note">' + escapeHtml(d.note) + '</div>';
       }
 
-      html += '<div class="deposit-actions">';
-      var wdCls = d.status === 'withdrawn' ? 'success' : '';
-      var wdTxt = d.status === 'withdrawn' ? '已提取' : '提取';
-      var wdIcon = d.status === 'withdrawn'
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
-      html += '<button class="deposit-action-btn ' + wdCls + '" onclick="toggleWithdraw(' + d.id + ')">' + wdIcon + wdTxt + '</button>';
-      html += '<div class="action-menu">';
-      html += '<button class="deposit-action-btn action-more" aria-label="更多操作" onclick="toggleActionMenu(event, ' + d.id + ')">' +
-        '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>';
-      html += '<div class="action-menu-list" id="menu-' + d.id + '">' +
-        '<button class="action-menu-item" onclick="openEditForm(' + d.id + ')">编辑</button>' +
-        '<button class="action-menu-item danger" onclick="confirmDelete(' + d.id + ')">删除</button>' +
-        '</div>';
-      html += '</div>';
-      html += '</div>';
       html += '</div>';
     });
 
