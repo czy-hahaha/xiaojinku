@@ -488,12 +488,16 @@ body {
 .year-cell.has-deposit { border-color: var(--primary); background: var(--primary-light); }
 .year-cell.current-month { box-shadow: inset 0 0 0 2px var(--primary); }
 .year-cell .month-name { font-size: 15px; font-weight: 700; }
-.year-cell .month-info { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; }
+.year-cell .month-info { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; display: flex; flex-direction: column; gap: 2px; }
 .year-cell.has-deposit .month-info { color: var(--primary); }
+.year-cell .month-info span { white-space: nowrap; }
+.year-cell .month-info .mi-new { color: var(--primary); }
+.year-cell .month-info .mi-renew { color: var(--success); }
 .year-cell.selected { border-color: var(--primary); background: var(--primary); }
 .year-cell.selected .month-name { color: white; }
 .year-cell.selected .month-info { color: white; }
 .year-cell.selected.has-deposit .month-info { color: white; }
+.year-cell.selected .month-info span { color: white; }
 
 /* Data Management */
 .data-mgmt { margin-top: 24px; padding: 16px; }
@@ -1551,8 +1555,23 @@ function renderCalendar() {
     if (mList.length > 0) cls += ' has-deposit';
     if (today.getFullYear() === calYear && today.getMonth() === m) cls += ' current-month';
     if (selectedMonth === m) cls += ' selected';
-    var mAmount = mList.reduce(function(s, d) { return s + d.amount; }, 0);
-    var info = mList.length > 0 ? '¥' + formatMoney(mAmount) : '无' + actionLabel;
+    var info;
+    if (mList.length === 0) {
+      info = '无' + actionLabel;
+    } else if (calendarMode === 'deposit') {
+      // 存入视图：首存 / 续存 分开显示，哪类为 0 就不显示哪行
+      var newAmt = 0, newCnt = 0, renewAmt = 0, renewCnt = 0;
+      mList.forEach(function(d) {
+        if (d.type === 'renew') { renewAmt += d.amount; renewCnt++; }
+        else { newAmt += d.amount; newCnt++; }
+      });
+      info = '';
+      if (newCnt > 0) info += '<span class="mi-new">首存 ¥' + formatMoney(newAmt) + '</span>';
+      if (renewCnt > 0) info += '<span class="mi-renew">续存 ¥' + formatMoney(renewAmt) + '</span>';
+    } else {
+      var mAmount = mList.reduce(function(s, d) { return s + d.amount; }, 0);
+      info = '¥' + formatMoney(mAmount);
+    }
     html += '<div class="' + cls + '" onclick="selectMonth(' + m + ')">' +
       '<div class="month-name">' + monthNames[m] + '</div>' +
       '<div class="month-info">' + info + '</div>' +
