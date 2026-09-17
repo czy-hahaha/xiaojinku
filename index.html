@@ -1586,7 +1586,7 @@ function renderCalendar() {
     var yearRenew = yearDeposits.filter(function(d) { return d.type === 'renew'; });
     var newAmt = yearNew.reduce(function(s, d) { return s + d.amount; }, 0);
     var renewAmt = yearRenew.reduce(function(s, d) { return s + d.amount; }, 0);
-    summaryHtml = '本年原始存入 <span>¥' + formatMoney(newAmt) + '</span>（' + yearNew.length + '笔）　续存 <span>¥' + formatMoney(renewAmt) + '</span>（' + yearRenew.length + '笔）';
+    summaryHtml = '本年首存 <span>¥' + formatMoney(newAmt) + '</span>（' + yearNew.length + '笔）　续存 <span>¥' + formatMoney(renewAmt) + '</span>（' + yearRenew.length + '笔）';
   } else {
     var yearAmount = yearDeposits.reduce(function(s, d) { return s + d.amount; }, 0);
     summaryHtml = yearDeposits.length > 0
@@ -1617,7 +1617,7 @@ function renderCalendarDetail(deposits, month) {
     content.innerHTML = '<div class="calendar-detail-empty">' + (month !== null ? '这个月没有存款记录' : '今年没有存款记录') + '</div>';
     return;
   }
-  // 统一按银行分组展示；原始存入 / 续存 由卡片上的「续存」徽章区分，不再单独分层
+  // 统一按银行分组展示；首存 / 续存 由卡片上的「续存」徽章区分，不再单独分层
   content.innerHTML = renderDepositCards(deposits);
 }
 
@@ -1701,7 +1701,7 @@ function exportCSV() {
     var maturityTxt = d.maturityDate || '活期';
     var interestTxt = d.term ? Math.round(interest) : '';
     var maturityAmountTxt = d.term ? Math.round(d.amount + interest) : '';
-    var typeTxt = d.type === 'renew' ? '续存' : '新增存入';
+    var typeTxt = d.type === 'renew' ? '续存' : '首存';
     csv += (d.bank || '') + ',' + typeTxt + ',' + d.amount + ',' + rateTxt + ',' + termTxt + ',' + d.startDate + ',' + maturityTxt + ',' + interestTxt + ',' + maturityAmountTxt + ',' + (d.status === 'active' ? '存入中' : '已提取') + ',' + (d.note || '') + '\n';
   });
   var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
