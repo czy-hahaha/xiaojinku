@@ -326,6 +326,14 @@ body {
 .bank-group-left { display: flex; align-items: center; gap: 8px; }
 .bank-group-name { font-size: 16px; font-weight: 700; color: var(--primary); }
 .bank-group-name svg { width: 18px; height: 18px; color: var(--primary); }
+.overdue-flag {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: var(--danger); color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1;
+  border-radius: 9px; flex-shrink: 0;
+  box-shadow: 0 0 0 2px #fff;
+}
 .bank-group-meta { display: flex; align-items: center; gap: 8px; }
 .bank-group-count {
   background: linear-gradient(135deg, var(--primary) 0%, #6a5ae0 100%);
@@ -1140,7 +1148,7 @@ function depositDetailHtml(d) {
   var interest = calcInterest(d.amount, d.rate, d.term);
   var rateText = d.rate ? d.rate.toFixed(2) + '%' : '—';
   var termText = d.term ? d.term + '月' : '活期';
-  var maturityText = d.maturityDate ? d.maturityDate : '活期（随时可取）';
+  var maturityText = d.maturityDate ? d.maturityDate : '-';
   var interestText = d.term ? '¥' + formatMoneyFull(interest) : '—';
   return '<div class="deposit-item-details">' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">' + (d.type === 'renew' ? '续存日期' : '存入日期') + '</span><span class="deposit-detail-value">' + (d.startDate || '—') + '</span></div>' +
@@ -1190,11 +1198,13 @@ function renderList() {
     var deposits = groups[bankKey];
     var bankTotal = deposits.reduce(function(s, d) { return s + d.amount; }, 0);
     var hasOverdue = deposits.some(function(d) { return d.status === 'active' && d.maturityDate && d.maturityDate < today; });
+    var overdueCount = deposits.filter(function(d) { return d.status === 'active' && d.maturityDate && d.maturityDate < today; }).length;
 
     html += '<div class="bank-group' + (hasOverdue ? '' : ' collapsed') + '">';
     html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
     html += '<div class="bank-group-left">';
     html += '<span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span>';
+    if (overdueCount > 0) html += '<span class="overdue-flag" title="' + overdueCount + ' 笔已逾期">' + overdueCount + '</span>';
     html += '</div>';
     html += '<div class="bank-group-meta">';
     html += '<span class="bank-group-count">¥' + formatMoney(bankTotal) + '</span>';
@@ -1661,10 +1671,11 @@ function renderDepositCards(deposits) {
   bankOrder.forEach(function(bankKey) {
     var items = groups[bankKey];
     var bankTotal = items.reduce(function(s, d) { return s + d.amount; }, 0);
+    var overdueCount = items.filter(function(d) { return d.status === 'active' && d.maturityDate && d.maturityDate < today; }).length;
 
     html += '<div class="bank-group">';
     html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
-    html += '<div class="bank-group-left"><span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span></div>';
+    html += '<div class="bank-group-left"><span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span>' + (overdueCount > 0 ? '<span class="overdue-flag" title="' + overdueCount + ' 笔已逾期">' + overdueCount + '</span>' : '') + '</div>';
     html += '<div class="bank-group-meta"><span class="bank-group-count">¥' + formatMoney(bankTotal) + '</span>' + chevronSvg + '</div>';
     html += '</div>';
     html += '<div class="bank-group-items"><div class="bank-group-inner">';
