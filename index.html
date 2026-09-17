@@ -1163,10 +1163,14 @@ function renderList() {
   }
 
   data.sort(function(a, b) {
-    // 活期（无到期日）排最后，其余按到期日由近到远
-    if (!a.maturityDate) return 1;
-    if (!b.maturityDate) return -1;
-    return a.maturityDate < b.maturityDate ? -1 : 1;
+    // 排序桶：0=活期(无到期)最前，1=未提取定期(按到期日近→远)，2=已提取垫底
+    var wa = (a.status === 'withdrawn') ? 2 : (!a.maturityDate ? 0 : 1);
+    var wb = (b.status === 'withdrawn') ? 2 : (!b.maturityDate ? 0 : 1);
+    if (wa !== wb) return wa - wb;
+    var am = a.maturityDate || '';
+    var bm = b.maturityDate || '';
+    if (am !== bm) return am < bm ? -1 : 1;
+    return (a.id < b.id) ? -1 : 1; // 兜底稳定排序
   });
 
   // Group by bank
