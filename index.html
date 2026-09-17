@@ -256,7 +256,7 @@ body {
 .deposit-detail-item { display: flex; flex-direction: column; }
 .deposit-detail-label { color: var(--text-tertiary); font-size: 11px; }
 .deposit-detail-value { color: var(--text-primary); font-weight: 500; }
-.deposit-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+.deposit-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: space-between; align-items: center; }
 .deposit-action-btn {
   padding: 6px 14px;
   border: 1px solid var(--border);
@@ -276,6 +276,18 @@ body {
 .deposit-action-btn.success:hover { background: var(--success); color: white; }
 .deposit-action-btn.renew { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 .deposit-action-btn.renew:hover { background: var(--primary); color: white; }
+/* 更多操作「⋯」菜单 */
+.action-menu { position: relative; }
+.deposit-action-btn.action-more { padding: 6px 12px; min-width: 44px; justify-content: center; }
+.deposit-action-btn.action-more svg { width: 18px; height: 18px; }
+.action-menu-list { position: absolute; right: 0; top: calc(100% + 6px); min-width: 120px; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 6px; z-index: 20; display: none; }
+.action-menu-list.show { display: block; }
+.action-menu-item { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 10px 12px; border-radius: 6px; font-size: 14px; color: var(--text-secondary); cursor: pointer; min-height: 44px; }
+.action-menu-item:hover { background: var(--bg-secondary, #f5f7fa); color: var(--primary); }
+.action-menu-item.danger { color: var(--danger); }
+.action-menu-item.danger:hover { background: #fef2f2; color: var(--danger); }
+/* 已提取卡片操作区进一步弱化 */
+.deposit-item.withdrawn .deposit-actions { opacity: 0.55; }
 .renew-hint { font-size: 12px; color: var(--primary); background: var(--primary-light); border-radius: 6px; padding: 8px 10px; margin-bottom: 12px; line-height: 1.5; }
 .bank-renew-row { display: flex; align-items: center; gap: 10px; }
 .bank-renew-row .form-select { flex: 1; min-width: 0; }
@@ -1188,18 +1200,20 @@ function renderList() {
       }
 
       html += '<div class="deposit-actions">';
-      html += '<button class="deposit-action-btn" onclick="openEditForm(' + d.id + ')">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
-        '编辑</button>';
-      html += '<button class="deposit-action-btn danger" onclick="confirmDelete(' + d.id + ')">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
-        '删除</button>';
       var wdCls = d.status === 'withdrawn' ? 'success' : '';
       var wdTxt = d.status === 'withdrawn' ? '已提取' : '提取';
       var wdIcon = d.status === 'withdrawn'
         ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'
         : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
       html += '<button class="deposit-action-btn ' + wdCls + '" onclick="toggleWithdraw(' + d.id + ')">' + wdIcon + wdTxt + '</button>';
+      html += '<div class="action-menu">';
+      html += '<button class="deposit-action-btn action-more" aria-label="更多操作" onclick="toggleActionMenu(event, ' + d.id + ')">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>';
+      html += '<div class="action-menu-list" id="menu-' + d.id + '">' +
+        '<button class="action-menu-item" onclick="openEditForm(' + d.id + ')">编辑</button>' +
+        '<button class="action-menu-item danger" onclick="confirmDelete(' + d.id + ')">删除</button>' +
+        '</div>';
+      html += '</div>';
       html += '</div>';
       html += '</div>';
     });
@@ -1398,6 +1412,25 @@ function toggleWithdraw(id) {
   }
   saveData(data);
   renderAll();
+}
+
+// 操作「⋯」菜单：点开/收起，点菜单外部自动关闭
+function toggleActionMenu(e, id) {
+  e.stopPropagation();
+  var list = document.getElementById('menu-' + id);
+  if (!list) return;
+  var wasOpen = list.classList.contains('show');
+  closeAllMenus();
+  if (!wasOpen) list.classList.add('show');
+}
+function closeAllMenus() {
+  var open = document.querySelectorAll('.action-menu-list.show');
+  for (var i = 0; i < open.length; i++) open[i].classList.remove('show');
+}
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest || !e.target.closest('.action-menu')) closeAllMenus();
+  });
 }
 
 function confirmDelete(id) {
