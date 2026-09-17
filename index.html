@@ -513,12 +513,16 @@ body {
 /* Data Management */
 .data-mgmt { margin-top: 24px; padding: 16px; }
 .data-mgmt-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; }
-.data-mgmt-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.data-mgmt-actions { display: flex; gap: 8px; flex-wrap: nowrap; }
 .data-mgmt-btn {
-  padding: 8px 14px;
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 8px 6px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 12.5px;
   cursor: pointer;
   background: white;
   color: var(--text-secondary);
@@ -528,7 +532,16 @@ body {
 }
 .data-mgmt-btn:hover { border-color: var(--primary); color: var(--primary); }
 .data-mgmt-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
-.data-mgmt-btn svg { width: 16px; height: 16px; }
+.data-mgmt-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+@media (max-width: 430px) {
+  .data-mgmt-actions { gap: 6px; }
+  .data-mgmt-btn { font-size: 11px; padding: 8px 2px; gap: 2px; }
+  .data-mgmt-btn svg { width: 13px; height: 13px; }
+}
+/* 到期日期状态色（区分逾期/临期） */
+.deposit-detail-value.maturity-danger { color: var(--danger); }
+.deposit-detail-value.maturity-warn { color: var(--warning); }
+.deposit-detail-value.maturity-muted { color: var(--text-tertiary); font-weight: 400; }
 
 .backup-hint {
   font-size: 12px; color: var(--warning);
@@ -1130,10 +1143,18 @@ function depositDetailHtml(d) {
   var rateText = d.rate ? d.rate.toFixed(2) + '%' : '—';
   var termText = d.term ? d.term + '月' : '活期';
   var maturityText = d.maturityDate ? d.maturityDate : '活期（随时可取）';
-  var interestText = d.term ? '<span style="color:var(--success)">¥' + formatMoneyFull(interest) + '</span>' : '—';
+  var maturityCls = '';
+  if (d.status === 'withdrawn' || !d.maturityDate) {
+    maturityCls = ' maturity-muted';
+  } else {
+    var mDays = daysBetween(todayStr(), d.maturityDate);
+    if (mDays < 0) maturityCls = ' maturity-danger';
+    else if (mDays <= 30) maturityCls = ' maturity-warn';
+  }
+  var interestText = d.term ? '¥' + formatMoneyFull(interest) : '—';
   return '<div class="deposit-item-details">' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">' + (d.type === 'renew' ? '续存日期' : '存入日期') + '</span><span class="deposit-detail-value">' + (d.startDate || '—') + '</span></div>' +
-    '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日期</span><span class="deposit-detail-value">' + maturityText + '</span></div>' +
+    '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日期</span><span class="deposit-detail-value' + maturityCls + '">' + maturityText + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + rateText + ' / ' + termText + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value">' + interestText + '</span></div>' +
   '</div>';
