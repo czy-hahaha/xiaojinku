@@ -327,13 +327,11 @@ body {
 .bank-group-name { font-size: 16px; font-weight: 700; color: var(--primary); }
 .bank-group-name svg { width: 18px; height: 18px; color: var(--primary); }
 .overdue-flag {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 22px;
-  background: var(--danger); color: #fff;
-  font-size: 12px; font-weight: 700; line-height: 1;
-  padding-bottom: 3px;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  display: inline-block;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--danger);
   flex-shrink: 0;
+  box-shadow: 0 0 0 2px #fff;
 }
 .bank-group-meta { display: flex; align-items: center; gap: 8px; }
 .bank-group-count {
@@ -1205,9 +1203,9 @@ function renderList() {
     html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
     html += '<div class="bank-group-left">';
     html += '<span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span>';
-    if (overdueCount > 0) html += '<span class="overdue-flag" title="' + overdueCount + ' 笔已逾期">' + overdueCount + '</span>';
     html += '</div>';
     html += '<div class="bank-group-meta">';
+    if (overdueCount > 0) html += '<span class="overdue-flag" title="' + overdueCount + ' 笔已逾期"></span>';
     html += '<span class="bank-group-count">¥' + formatMoney(bankTotal) + '</span>';
     html += chevronSvg;
     html += '</div>';
@@ -1676,8 +1674,8 @@ function renderDepositCards(deposits) {
 
     html += '<div class="bank-group">';
     html += '<div class="bank-group-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">';
-    html += '<div class="bank-group-left"><span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span>' + (overdueCount > 0 ? '<span class="overdue-flag" title="' + overdueCount + ' 笔已逾期">' + overdueCount + '</span>' : '') + '</div>';
-    html += '<div class="bank-group-meta"><span class="bank-group-count">¥' + formatMoney(bankTotal) + '</span>' + chevronSvg + '</div>';
+    html += '<div class="bank-group-left"><span class="bank-group-name">' + bankIconSvg + escapeHtml(bankKey) + '</span></div>';
+    html += '<div class="bank-group-meta">' + (overdueCount > 0 ? '<span class="overdue-flag" title="' + overdueCount + ' 笔已逾期"></span>' : '') + '<span class="bank-group-count">¥' + formatMoney(bankTotal) + '</span>' + chevronSvg + '</div>';
     html += '</div>';
     html += '<div class="bank-group-items"><div class="bank-group-inner">';
 
