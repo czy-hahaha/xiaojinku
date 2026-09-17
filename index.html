@@ -256,7 +256,7 @@ body {
 .deposit-detail-item { display: flex; flex-direction: column; }
 .deposit-detail-label { color: var(--text-tertiary); font-size: 11px; }
 .deposit-detail-value { color: var(--text-primary); font-weight: 500; }
-/* 卡片右上角：提取(绿) + ⋯ 一组（替代原卡底按钮行） */
+/* 卡片右上角：剩X月 + ⋯ 一组（替代原卡底按钮行） */
 .top-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .deposit-action-btn {
   padding: 6px 14px;
@@ -277,12 +277,6 @@ body {
 .deposit-action-btn.success:hover { background: var(--success); color: white; }
 .deposit-action-btn.renew { border-color: var(--success); color: var(--success); background: var(--success-light); }
 .deposit-action-btn.renew:hover { background: var(--success); color: white; }
-/* 卡片右上角常驻「提取」按钮（绿/红/灰三态） */
-.extract-btn { background: var(--success); color: #fff; border-color: var(--success); font-weight: 600; }
-.extract-btn:hover { filter: brightness(0.93); }
-.extract-btn.danger { background: var(--danger); border-color: var(--danger); }
-.extract-btn.restored { background: var(--text-tertiary); border-color: var(--text-tertiary); }
-.extract-btn.soon { box-shadow: 0 0 0 3px var(--warning-light); }
 /* 更多操作「⋯」菜单 */
 .action-menu { position: relative; }
 .deposit-action-btn.action-more { padding: 6px 12px; min-width: 44px; justify-content: center; }
@@ -1160,7 +1154,6 @@ function depositDetailHtml(d) {
   return '<div class="deposit-item-details">' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">' + (d.type === 'renew' ? '续存日期' : '存入日期') + '</span><span class="deposit-detail-value">' + (d.startDate || '—') + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">到期日期</span><span class="deposit-detail-value">' + maturityText + '</span></div>' +
-    '<div class="deposit-detail-item"><span class="deposit-detail-label">剩余时间</span><span class="deposit-detail-value">' + depositRemainBadge(d) + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">利率/期限</span><span class="deposit-detail-value">' + rateText + ' / ' + termText + '</span></div>' +
     '<div class="deposit-detail-item"><span class="deposit-detail-label">预估利息</span><span class="deposit-detail-value">' + interestText + '</span></div>' +
   '</div>';
@@ -1236,16 +1229,14 @@ function renderList() {
       if (d.type === 'renew') html += '<span class="type-tag renew">续存</span>';
       html += '</div>';
       html += '<div class="top-right">';
+      html += depositRemainBadge(d);
       var dotsSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
-      var wdIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
-      var wdClass = 'deposit-action-btn extract-btn';
-      var wdTxt;
-      if (d.status === 'withdrawn') { wdClass += ' restored'; wdTxt = '已提取 / 恢复'; }
-      else { wdTxt = '提取'; if (isOverdue) wdClass += ' danger'; else if (isSoon) wdClass += ' soon'; }
-      html += '<button class="' + wdClass + '" onclick="toggleWithdraw(' + d.id + ')">' + wdIcon + wdTxt + '</button>';
+      var wdMenuTxt = d.status === 'withdrawn' ? '已提取 / 恢复' : '提取';
+      var wdMenuCls = d.status === 'withdrawn' ? 'extract disabled' : 'extract';
       html += '<div class="action-menu">';
       html += '<button class="deposit-action-btn action-more" aria-label="更多操作" onclick="toggleActionMenu(event, ' + d.id + ')">' + dotsSvg + '</button>';
       html += '<div class="action-menu-list" id="menu-' + d.id + '">' +
+        '<button class="action-menu-item ' + wdMenuCls + '" onclick="toggleWithdraw(' + d.id + ')">' + wdMenuTxt + '</button>' +
         '<button class="action-menu-item" onclick="openEditForm(' + d.id + ')">编辑</button>' +
         '<button class="action-menu-item danger" onclick="confirmDelete(' + d.id + ')">删除</button>' +
         '</div>';
